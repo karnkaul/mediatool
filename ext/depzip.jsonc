@@ -1,0 +1,16 @@
+{
+  "packages": [
+    {
+      "uri": "karnkaul/djson",
+      "branch": "v3.1.5"
+    },
+    {
+      "uri": "karnkaul/kcurl",
+      "branch": "develop"
+    },
+    {
+      "uri": "karnkaul/klib",
+      "branch": "v0.5.7"
+    }
+  ]
+}
