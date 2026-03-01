@@ -12,3 +12,9 @@ file(GLOB_RECURSE sources LIST_DIRECTORIES false "src/*.[hc]pp")
 target_sources(${PROJECT_NAME} PRIVATE
   ${sources}
 )
+
+if (WIN32)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    _CRT_SECURE_NO_WARNINGS=1
+  )
+endif()
