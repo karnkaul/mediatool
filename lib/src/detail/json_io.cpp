@@ -1,8 +1,7 @@
 #include "detail/json_io.hpp"
 #include "djson/json.hpp"
 #include "mediatool/omdb.hpp"
-#include <charconv>
-#include <cstddef>
+#include "mediatool/util.hpp"
 #include <string_view>
 
 namespace mediatool {
@@ -22,9 +21,7 @@ void from_string(dj::Json const& in, int& out) {
 	auto text = in.as_string_view();
 	auto end_index = text.size();
 	if (auto const i = text.find('-'); i > 0 && i < std::string_view::npos) { end_index = i; }
-	// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-	auto const* end = text.data() + std::ptrdiff_t(end_index);
-	std::from_chars(text.data(), end, out);
+	out = util::to_int(text.substr(0, end_index));
 }
 } // namespace
 
