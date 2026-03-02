@@ -22,16 +22,12 @@ class OmdbService : public omdb::IService {
 	void set_api_token(std::string token) final;
 	[[nodiscard]] auto get_api_token() const -> std::string_view final { return m_token; }
 
-	[[nodiscard]] auto search_movie(std::string_view title) const -> omdb::Result<omdb::Movie> final;
-	[[nodiscard]] auto search_series(std::string_view title) const -> omdb::Result<omdb::Series> final;
-	[[nodiscard]] auto search_season(std::string_view title, int season) const -> omdb::Result<omdb::Season> final;
-	[[nodiscard]] auto search_episode(std::string_view title, int season, int episode) const -> omdb::Result<omdb::Episode> final;
-	[[nodiscard]] auto search_generic(std::string_view title) const -> omdb::Result<dj::Json> final;
+	[[nodiscard]] auto search(Query const& query, std::optional<omdb::Type> type) const -> omdb::Result<omdb::Payload> final;
 
-	[[nodiscard]] static auto build_request(OmdbService::Search const& search) -> kcurl::http::Request;
+	[[nodiscard]] static auto build_request(Query const& query, std::string_view type) -> kcurl::http::Request;
 
 	[[nodiscard]] auto create_secret() const -> kcurl::http::Query;
-	[[nodiscard]] auto perform_search(Search const& search) const -> kcurl::http::Result<dj::Json>;
+	[[nodiscard]] auto perform_search(Query const& query, std::string_view type) const -> kcurl::http::Result<dj::Json>;
 
 	klib::TypedLogger<omdb::IService> m_log{};
 

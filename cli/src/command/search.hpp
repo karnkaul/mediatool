@@ -1,5 +1,6 @@
 #pragma once
 #include "command/command.hpp"
+#include "mediatool/omdb.hpp"
 #include <string_view>
 
 namespace mediatool::cli {
@@ -13,15 +14,7 @@ class Search : public Command {
 	[[nodiscard]] auto get_name() const -> std::string_view final { return name_v; }
 	[[nodiscard]] auto execute(Instance const& instance) -> int final;
 
-	[[nodiscard]] auto search_episode(omdb::IService const& omdb) const -> int;
-	[[nodiscard]] auto search_season(omdb::IService const& omdb) const -> int;
-	[[nodiscard]] auto search_series(omdb::IService const& omdb) const -> int;
-	[[nodiscard]] auto search_movie(omdb::IService const& omdb) const -> int;
-	[[nodiscard]] auto search_generic(omdb::IService const& omdb) const -> int;
-
-	std::string_view m_title{};
-	std::string_view m_media_type{};
-	int m_season{};
-	int m_episode{};
+	omdb::IService::Query m_query{};
+	std::string_view m_type{};
 };
 } // namespace mediatool::cli
