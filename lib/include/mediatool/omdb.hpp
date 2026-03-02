@@ -59,9 +59,6 @@ class IService : public klib::Polymorphic {
 		int episode{};
 	};
 
-	virtual void set_api_token(std::string token) = 0;
-	[[nodiscard]] virtual auto get_api_token() const -> std::string_view = 0;
-
 	[[nodiscard]] virtual auto search(Query const& query, std::optional<Type> type = {}) const -> omdb::Result<Payload> = 0;
 };
 } // namespace mediatool::omdb

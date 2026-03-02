@@ -1,10 +1,10 @@
 #pragma once
 #include "klib/base_types.hpp"
 #include "klib/enum_ops.hpp"
+#include "mediatool/api_token_provider.hpp"
 #include "mediatool/omdb.hpp"
 #include <cstdint>
 #include <memory>
-#include <string>
 
 namespace mediatool {
 enum class InstanceCreateFlag : std::uint8_t {
@@ -16,8 +16,6 @@ enum class InstanceCreateFlag : std::uint8_t {
 struct InstanceCreateInfo {
 	using Flag = InstanceCreateFlag;
 
-	std::string omdb_token;
-
 	Flag flags{};
 };
 
@@ -25,7 +23,7 @@ class Instance : public klib::Polymorphic {
   public:
 	using CreateInfo = InstanceCreateInfo;
 
-	[[nodiscard]] static auto create(CreateInfo create_info) -> std::unique_ptr<Instance>;
+	[[nodiscard]] static auto create(CreateInfo const& create_info, IApiTokenProvider& omdb_token_provider) -> std::unique_ptr<Instance>;
 
 	[[nodiscard]] virtual auto get_omdb_service() const -> omdb::IService const& = 0;
 };
