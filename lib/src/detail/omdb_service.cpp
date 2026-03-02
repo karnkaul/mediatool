@@ -11,6 +11,8 @@
 namespace mediatool::detail {
 namespace http = kcurl::http;
 
+using omdb::MediaType;
+
 namespace {
 constexpr auto url_v = std::string_view{"http://www.omdbapi.com/"};
 
@@ -22,6 +24,8 @@ constexpr auto season_v = std::string_view{"Season"};
 constexpr auto episode_v = std::string_view{"Episode"};
 } // namespace key
 
+[[nodiscard]] constexpr auto is_valid(MediaType const type) { return type >= MediaType{0} && type < MediaType::COUNT_; }
+
 struct RequestBuilder {
 	auto add_query(std::string_view const key, std::string value) -> RequestBuilder& {
 		if (!value.empty()) { request.queries.push_back(http::Query{.key = std::string{key}, .value = std::move(value)}); }
@@ -29,7 +33,7 @@ struct RequestBuilder {
 	}
 
 	auto add_type(std::string_view const type) -> RequestBuilder& {
-		if (type.empty() || type == omdb::media_type_str_v[omdb::MediaType::None]) { return *this; }
+		if (type.empty()) { return *this; }
 		return add_query(key::type_v, std::string{type});
 	}
 
@@ -51,10 +55,10 @@ struct RequestBuilder {
 };
 
 template <typename Type>
-[[nodiscard]] auto to(http::Response<dj::Json> const& response) -> http::Response<Type> {
+[[nodiscard]] auto to_payload(http::Response<dj::Json> const& response) -> http::Response<omdb::Payload> {
 	auto ret = Type{};
 	from_json(response.payload, ret);
-	return response.rewrap_as(std::move(ret));
+	return response.rewrap_as(omdb::Payload{std::move(ret)});
 }
 } // namespace
 
@@ -73,54 +77,30 @@ void OmdbService::set_api_token(std::string token) {
 	m_log.debug("API token changed");
 }
 
-auto OmdbService::search_movie(std::string_view const title) const -> http::Result<omdb::Movie> {
-	auto const search = OmdbService::Search{
-		.title = title,
-		.type = omdb::media_type_str_v[omdb::MediaType::Movie],
-	};
-	return perform_search(search).transform(&to<omdb::Movie>);
+auto OmdbService::search(Query const& query, std::optional<MediaType> const type) const -> omdb::Result<omdb::Payload> {
+	if (!type || !is_valid(*type)) {
+		return perform_search(query, {}).transform([](http::Response<dj::Json> in) { return in.rewrap_as(omdb::Payload{std::move(in.payload)}); });
+	}
+
+	auto const type_str = omdb::media_type_str_v[*type];
+	switch (*type) {
+	case MediaType::Movie: return perform_search(query, type_str).transform(&to_payload<omdb::Movie>);
+	case MediaType::Series: {
+		if (query.season > 0) { return perform_search(query, type_str).transform(&to_payload<omdb::Season>); }
+		return perform_search(query, type_str).transform(&to_payload<omdb::Series>);
+	}
+	case MediaType::Episode: return perform_search(query, type_str).transform(&to_payload<omdb::Episode>);
+	default: std::unreachable();
+	}
 }
 
-auto OmdbService::search_series(std::string_view title) const -> http::Result<omdb::Series> {
-	auto const search = OmdbService::Search{
-		.title = title,
-		.type = omdb::media_type_str_v[omdb::MediaType::Series],
-	};
-	return perform_search(search).transform(&to<omdb::Series>);
-}
-
-auto OmdbService::search_season(std::string_view const title, int const season) const -> http::Result<omdb::Season> {
-	auto const search = OmdbService::Search{
-		.title = title,
-		.type = omdb::media_type_str_v[omdb::MediaType::Series],
-		.season = season,
-	};
-	return perform_search(search).transform(&to<omdb::Season>);
-}
-
-auto OmdbService::search_episode(std::string_view const title, int const season, int const episode) const -> http::Result<omdb::Episode> {
-	auto const search = OmdbService::Search{
-		.title = title,
-		.type = omdb::media_type_str_v[omdb::MediaType::Episode],
-		.season = season,
-		.episode = episode,
-	};
-	return perform_search(search).transform(&to<omdb::Episode>);
-}
-
-auto OmdbService::search_generic(std::string_view const title) const -> http::Result<dj::Json> {
-	auto const search = OmdbService::Search{
-		.title = title,
-		.type = omdb::media_type_str_v[omdb::MediaType::None],
-	};
-	return perform_search(search);
-}
-
-auto OmdbService::build_request(OmdbService::Search const& search) -> http::Request {
-	return RequestBuilder{}.add_type(search.type).add_title(search.title).add_season(search.season).add_episode(search.episode).build();
+auto OmdbService::build_request(Query const& query, std::string_view const type) -> http::Request {
+	return RequestBuilder{}.add_type(type).add_title(query.title).add_season(query.season).add_episode(query.episode).build();
 }
 
 auto OmdbService::create_secret() const -> http::Query { return http::Query{.key = std::string{key::apikey_v}, .value = m_token}; }
 
-auto OmdbService::perform_search(Search const& search) const -> http::Result<dj::Json> { return m_gateway->get_json(build_request(search), create_secret()); }
+auto OmdbService::perform_search(Query const& query, std::string_view const type) const -> http::Result<dj::Json> {
+	return m_gateway->get_json(build_request(query, type), create_secret());
+}
 } // namespace mediatool::detail
