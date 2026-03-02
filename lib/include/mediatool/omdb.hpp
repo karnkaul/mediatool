@@ -2,26 +2,22 @@
 #include "djson/json.hpp"
 #include "kcurl/http.hpp"
 #include "klib/base_types.hpp"
-#include "klib/enum_array.hpp"
+#include "klib/enum_name.hpp"
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 #include <vector>
 
 namespace mediatool::omdb {
 enum class MediaType : std::int8_t { Movie, Series, Episode, COUNT_ };
-constexpr auto media_type_str_v = klib::EnumArray<MediaType, std::string_view>{"movie", "series", "episode"};
 
-[[nodiscard]] constexpr auto to_media_type(std::string_view const in) -> std::optional<omdb::MediaType> {
-	for (auto i = std::to_underlying(omdb::MediaType{0}); i < std::to_underlying(omdb::MediaType::COUNT_); ++i) {
-		auto const mt = omdb::MediaType{i};
-		if (omdb::media_type_str_v[mt] == in) { return mt; }
-	}
-	return {};
-}
+auto const media_type_map = klib::EnumNameMap<MediaType>{
+	{MediaType::Movie, "movie"},
+	{MediaType::Series, "series"},
+	{MediaType::Episode, "episode"},
+};
 
 struct Movie {
 	std::string title{};

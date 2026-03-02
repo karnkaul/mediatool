@@ -24,7 +24,7 @@ auto Identify::execute(Instance const& /*instance*/) -> int {
 	}
 
 	std::string_view const entry_type = fs::is_directory(path) ? "directory" : "file";
-	log.info("MediaType: {} ({})", media_type_str_v[*media_type], entry_type);
+	log.info("MediaType: {} ({})", media_name_map.to_name(*media_type), entry_type);
 	return EXIT_SUCCESS;
 }
 } // namespace mediatool::cli

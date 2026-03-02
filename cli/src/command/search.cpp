@@ -30,7 +30,7 @@ Search::Search() {
 }
 
 auto Search::execute(Instance const& instance) -> int {
-	auto media_type = omdb::to_media_type(m_media_type);
+	auto media_type = omdb::media_type_map.to_enum(m_media_type);
 
 	if (m_query.episode > 0) {
 		media_type = omdb::MediaType::Episode;

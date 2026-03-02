@@ -82,14 +82,14 @@ auto OmdbService::search(Query const& query, std::optional<MediaType> const type
 		return perform_search(query, {}).transform([](http::Response<dj::Json> in) { return in.rewrap_as(omdb::Payload{std::move(in.payload)}); });
 	}
 
-	auto const type_str = omdb::media_type_str_v[*type];
+	auto const type_name = omdb::media_type_map.to_name(*type);
 	switch (*type) {
-	case MediaType::Movie: return perform_search(query, type_str).transform(&to_payload<omdb::Movie>);
+	case MediaType::Movie: return perform_search(query, type_name).transform(&to_payload<omdb::Movie>);
 	case MediaType::Series: {
-		if (query.season > 0) { return perform_search(query, type_str).transform(&to_payload<omdb::Season>); }
-		return perform_search(query, type_str).transform(&to_payload<omdb::Series>);
+		if (query.season > 0) { return perform_search(query, type_name).transform(&to_payload<omdb::Season>); }
+		return perform_search(query, type_name).transform(&to_payload<omdb::Series>);
 	}
-	case MediaType::Episode: return perform_search(query, type_str).transform(&to_payload<omdb::Episode>);
+	case MediaType::Episode: return perform_search(query, type_name).transform(&to_payload<omdb::Episode>);
 	default: std::unreachable();
 	}
 }

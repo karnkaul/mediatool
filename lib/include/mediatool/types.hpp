@@ -1,12 +1,17 @@
 #pragma once
-#include "klib/enum_array.hpp"
+#include "klib/enum_name.hpp"
 #include <compare>
 #include <cstdint>
 #include <string>
 
 namespace mediatool {
 enum class MediaType : std::int8_t { Movie, Episode, Season, Series, COUNT_ };
-constexpr auto media_type_str_v = klib::EnumArray<MediaType, std::string_view>{"movie", "episode", "season", "series"};
+auto const media_name_map = klib::EnumNameMap<MediaType>{
+	{MediaType::Movie, "movie"},
+	{MediaType::Episode, "episode"},
+	{MediaType::Season, "season"},
+	{MediaType::Series, "series"},
+};
 
 class SeasonId {
   public:
