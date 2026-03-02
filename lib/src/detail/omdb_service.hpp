@@ -22,7 +22,7 @@ class OmdbService : public omdb::IService {
 	void set_api_token(std::string token) final;
 	[[nodiscard]] auto get_api_token() const -> std::string_view final { return m_token; }
 
-	[[nodiscard]] auto search(Query const& query, std::optional<omdb::MediaType> type) const -> omdb::Result<omdb::Payload> final;
+	[[nodiscard]] auto search(Query const& query, std::optional<omdb::Type> type) const -> omdb::Result<omdb::Payload> final;
 
 	[[nodiscard]] static auto build_request(Query const& query, std::string_view type) -> kcurl::http::Request;
 

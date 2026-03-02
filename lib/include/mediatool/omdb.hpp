@@ -11,12 +11,11 @@
 #include <vector>
 
 namespace mediatool::omdb {
-enum class MediaType : std::int8_t { Movie, Series, Episode, COUNT_ };
-
-auto const media_type_map = klib::EnumNameMap<MediaType>{
-	{MediaType::Movie, "movie"},
-	{MediaType::Series, "series"},
-	{MediaType::Episode, "episode"},
+enum class Type : std::int8_t { Movie, Series, Episode, COUNT_ };
+auto const type_map = klib::EnumNameMap<Type>{
+	{Type::Movie, "movie"},
+	{Type::Series, "series"},
+	{Type::Episode, "episode"},
 };
 
 struct Movie {
@@ -63,6 +62,6 @@ class IService : public klib::Polymorphic {
 	virtual void set_api_token(std::string token) = 0;
 	[[nodiscard]] virtual auto get_api_token() const -> std::string_view = 0;
 
-	[[nodiscard]] virtual auto search(Query const& query, std::optional<MediaType> type = {}) const -> omdb::Result<Payload> = 0;
+	[[nodiscard]] virtual auto search(Query const& query, std::optional<Type> type = {}) const -> omdb::Result<Payload> = 0;
 };
 } // namespace mediatool::omdb

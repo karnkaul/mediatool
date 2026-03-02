@@ -15,6 +15,6 @@ class Search : public Command {
 	[[nodiscard]] auto execute(Instance const& instance) -> int final;
 
 	omdb::IService::Query m_query{};
-	std::string_view m_media_type{};
+	std::string_view m_type{};
 };
 } // namespace mediatool::cli

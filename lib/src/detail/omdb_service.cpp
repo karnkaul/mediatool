@@ -11,7 +11,7 @@
 namespace mediatool::detail {
 namespace http = kcurl::http;
 
-using omdb::MediaType;
+using omdb::Type;
 
 namespace {
 constexpr auto url_v = std::string_view{"http://www.omdbapi.com/"};
@@ -24,7 +24,7 @@ constexpr auto season_v = std::string_view{"Season"};
 constexpr auto episode_v = std::string_view{"Episode"};
 } // namespace key
 
-[[nodiscard]] constexpr auto is_valid(MediaType const type) { return type >= MediaType{0} && type < MediaType::COUNT_; }
+[[nodiscard]] constexpr auto is_valid(Type const type) { return type >= Type{0} && type < Type::COUNT_; }
 
 struct RequestBuilder {
 	auto add_query(std::string_view const key, std::string value) -> RequestBuilder& {
@@ -77,19 +77,19 @@ void OmdbService::set_api_token(std::string token) {
 	m_log.debug("API token changed");
 }
 
-auto OmdbService::search(Query const& query, std::optional<MediaType> const type) const -> omdb::Result<omdb::Payload> {
+auto OmdbService::search(Query const& query, std::optional<Type> const type) const -> omdb::Result<omdb::Payload> {
 	if (!type || !is_valid(*type)) {
 		return perform_search(query, {}).transform([](http::Response<dj::Json> in) { return in.rewrap_as(omdb::Payload{std::move(in.payload)}); });
 	}
 
-	auto const type_name = omdb::media_type_map.to_name(*type);
+	auto const type_name = omdb::type_map.to_name(*type);
 	switch (*type) {
-	case MediaType::Movie: return perform_search(query, type_name).transform(&to_payload<omdb::Movie>);
-	case MediaType::Series: {
+	case Type::Movie: return perform_search(query, type_name).transform(&to_payload<omdb::Movie>);
+	case Type::Series: {
 		if (query.season > 0) { return perform_search(query, type_name).transform(&to_payload<omdb::Season>); }
 		return perform_search(query, type_name).transform(&to_payload<omdb::Series>);
 	}
-	case MediaType::Episode: return perform_search(query, type_name).transform(&to_payload<omdb::Episode>);
+	case Type::Episode: return perform_search(query, type_name).transform(&to_payload<omdb::Episode>);
 	default: std::unreachable();
 	}
 }

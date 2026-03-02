@@ -22,7 +22,7 @@ auto handle_error(http::Error const& error) -> int {
 
 Search::Search() {
 	m_args = {
-		klib::args::named_option(m_media_type, "t,type"),
+		klib::args::named_option(m_type, "t,type"),
 		klib::args::named_option(m_query.season, "s,season"),
 		klib::args::named_option(m_query.episode, "e,episode"),
 		klib::args::positional_required(m_query.title, "title"),
@@ -30,16 +30,16 @@ Search::Search() {
 }
 
 auto Search::execute(Instance const& instance) -> int {
-	auto media_type = omdb::media_type_map.to_enum(m_media_type);
+	auto type = omdb::type_map.to_enum(m_type);
 
 	if (m_query.episode > 0) {
-		media_type = omdb::MediaType::Episode;
+		type = omdb::Type::Episode;
 	} else if (m_query.season > 0) {
-		media_type = omdb::MediaType::Series;
+		type = omdb::Type::Series;
 	}
 
 	auto const& omdb = instance.get_omdb_service();
-	auto const result = omdb.search(m_query, media_type);
+	auto const result = omdb.search(m_query, type);
 	if (!result) { return handle_error(result.error()); }
 
 	auto const visitor = klib::Visitor{
