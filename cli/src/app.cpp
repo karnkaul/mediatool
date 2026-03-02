@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "command/identify.hpp"
 #include "command/search.hpp"
 #include "klib/args/arg.hpp"
 #include "klib/args/parse.hpp"
@@ -9,16 +10,17 @@
 #include "mediatool/build_version.hpp"
 #include "mediatool/instance.hpp"
 #include "mediatool/panic.hpp"
+#include "mediatool/util.hpp"
 #include <cstdlib>
-#include <print>
 
 namespace mediatool::cli {
 namespace {
-constexpr auto env_omdb_token_key = klib::CString{"MEDIATOOL_OMDB_TOKEN"};
+constexpr auto env_omdb_token_key_v = klib::CString{"MEDIATOOL_OMDB_TOKEN"};
 } // namespace
 
 auto App::run(int argc, char const* const* argv) -> int {
 	m_commands.push_back(std::make_unique<Search>());
+	m_commands.push_back(std::make_unique<Identify>());
 
 	auto const parse_result = parse_args(argc, argv);
 	if (parse_result.early_return()) { return parse_result.get_return_code(); }
@@ -43,22 +45,21 @@ auto App::parse_args(int argc, char const* const* argv) -> klib::args::ParseResu
 	auto const parse_info = klib::args::ParseInfo{
 		.version = version,
 	};
-	auto const args = std::array{
+	auto args = std::vector{
 		klib::args::named_option(m_instance_ci.omdb_token, "o,omdb-token", "omdb API token"),
-		klib::args::command(m_commands.front()->get_args(), m_commands.front()->get_name()),
 	};
+	for (auto const& command : m_commands) { args.push_back(klib::args::command(command->get_args(), command->get_name())); }
 	return klib::args::parse_main(parse_info, args, argc, argv);
 }
 
 void App::set_omdb_token() {
 	if (!m_instance_ci.omdb_token.empty()) { return; }
 
-	log.debug("reading omdb token from env:{}", env_omdb_token_key.as_view());
-	// NOLINTNEXTLINE(concurrency-mt-unsafe)
-	auto const* omdb_token = std::getenv(env_omdb_token_key.c_str());
-	if (!omdb_token || !*omdb_token) { throw Panic{"invalid (empty) ombd API token"}; }
-	m_instance_ci.omdb_token = omdb_token;
+	log.debug("reading omdb token from env:{}", env_omdb_token_key_v.as_view());
+	auto const omdb_token = util::get_env_var(env_omdb_token_key_v);
+	if (omdb_token.as_view().empty()) { throw Panic{"invalid (empty) ombd API token"}; }
+	m_instance_ci.omdb_token = omdb_token.as_view();
 }
 
-void App::create_instance() { m_instance = mediatool::Instance::create(m_instance_ci); }
+void App::create_instance() { m_instance = Instance::create(m_instance_ci); }
 } // namespace mediatool::cli

@@ -9,10 +9,10 @@ class Search : public Command {
 
 	explicit Search();
 
+  private:
 	[[nodiscard]] auto get_name() const -> std::string_view final { return name_v; }
 	[[nodiscard]] auto execute(Instance const& instance) -> int final;
 
-  private:
 	[[nodiscard]] auto search_episode(omdb::IService const& omdb) const -> int;
 	[[nodiscard]] auto search_season(omdb::IService const& omdb) const -> int;
 	[[nodiscard]] auto search_series(omdb::IService const& omdb) const -> int;
