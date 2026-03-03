@@ -25,9 +25,8 @@ auto App::run(int argc, char const* const* argv) -> int {
 	auto const parse_result = parse_args(argc, argv);
 	if (parse_result.early_return()) { return parse_result.get_return_code(); }
 
-	log.info("mediatool: {}", build_version_v);
+	log.debug("{}", build_version_v);
 
-	set_omdb_token();
 	create_instance();
 
 	auto const it = std::ranges::find_if(m_commands, [name = parse_result.get_command_name()](auto const& c) { return c->get_name() == name; });
@@ -40,26 +39,31 @@ auto App::run(int argc, char const* const* argv) -> int {
 	return command.execute(*m_instance);
 }
 
+auto App::get_api_token() -> std::string_view {
+	set_omdb_token();
+	return m_omdb_token;
+}
+
 auto App::parse_args(int argc, char const* const* argv) -> klib::args::ParseResult {
 	auto const version = std::format("{}", build_version_v);
 	auto const parse_info = klib::args::ParseInfo{
 		.version = version,
 	};
 	auto args = std::vector{
-		klib::args::named_option(m_instance_ci.omdb_token, "o,omdb-token", "omdb API token"),
+		klib::args::named_option(m_omdb_token, "o,omdb-token", "omdb API token"),
 	};
 	for (auto const& command : m_commands) { args.push_back(klib::args::command(command->get_args(), command->get_name())); }
 	return klib::args::parse_main(parse_info, args, argc, argv);
 }
 
 void App::set_omdb_token() {
-	if (!m_instance_ci.omdb_token.empty()) { return; }
+	if (!m_omdb_token.empty()) { return; }
 
-	log.debug("reading omdb token from env:{}", env_omdb_token_key_v.as_view());
+	log.debug("reading omdb API token from env:{}", env_omdb_token_key_v.as_view());
 	auto const omdb_token = util::get_env_var(env_omdb_token_key_v);
 	if (omdb_token.as_view().empty()) { throw Panic{"invalid (empty) ombd API token"}; }
-	m_instance_ci.omdb_token = omdb_token.as_view();
+	m_omdb_token = omdb_token.as_view();
 }
 
-void App::create_instance() { m_instance = Instance::create(m_instance_ci); }
+void App::create_instance() { m_instance = Instance::create(m_instance_ci, *this); }
 } // namespace mediatool::cli

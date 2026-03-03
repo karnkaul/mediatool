@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <optional>
 #include <string>
-#include <string_view>
 
 namespace mediatool::util {
 namespace fs = std::filesystem;
@@ -14,6 +13,7 @@ namespace fs = std::filesystem;
 [[nodiscard]] auto to_int(std::string_view text, int fallback = 0) -> int;
 
 [[nodiscard]] auto identify_media_type(fs::path const& path) -> std::optional<MediaType>;
+[[nodiscard]] auto identify_title(fs::path const& path) -> std::string;
 [[nodiscard]] auto extract_season_id(std::string const& name) -> std::optional<SeasonId>;
 [[nodiscard]] auto extract_episode_id(std::string const& name) -> std::optional<EpisodeId>;
 } // namespace mediatool::util

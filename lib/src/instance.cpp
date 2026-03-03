@@ -3,6 +3,7 @@
 #include "detail/omdb_service.hpp"
 #include "kcurl/curl.hpp"
 #include "klib/log.hpp"
+#include "mediatool/api_token_provider.hpp"
 #include "mediatool/omdb.hpp"
 #include <optional>
 
@@ -11,9 +12,9 @@ namespace detail {
 namespace {
 class Instance : public mediatool::Instance {
   public:
-	explicit Instance(CreateInfo create_info) {
+	explicit Instance(CreateInfo const& create_info, IApiTokenProvider& omdb_token_provider) {
 		create_curl(create_info.flags);
-		create_omdb(std::move(create_info.omdb_token));
+		create_omdb(omdb_token_provider);
 	}
 
   private:
@@ -23,7 +24,7 @@ class Instance : public mediatool::Instance {
 		if ((flags & InstanceCreateFlag::ExternalCurl) == InstanceCreateFlag::None) { m_curl.emplace(); }
 	}
 
-	void create_omdb(std::string token) { m_omdb.emplace(m_gateway, std::move(token)); }
+	void create_omdb(IApiTokenProvider& omdb_token_provider) { m_omdb.emplace(m_gateway, omdb_token_provider); }
 
 	klib::TypedLogger<Instance> m_log{};
 
@@ -34,5 +35,7 @@ class Instance : public mediatool::Instance {
 } // namespace
 } // namespace detail
 
-auto Instance::create(CreateInfo create_info) -> std::unique_ptr<Instance> { return std::make_unique<detail::Instance>(std::move(create_info)); }
+auto Instance::create(CreateInfo const& create_info, IApiTokenProvider& omdb_token_provider) -> std::unique_ptr<Instance> {
+	return std::make_unique<detail::Instance>(create_info, omdb_token_provider);
+}
 } // namespace mediatool

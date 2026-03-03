@@ -3,13 +3,14 @@
 #include "kcurl/http.hpp"
 #include "klib/log.hpp"
 #include "klib/ptr.hpp"
+#include "mediatool/api_token_provider.hpp"
 #include "mediatool/omdb.hpp"
 #include <string_view>
 
 namespace mediatool::detail {
 class OmdbService : public omdb::IService {
   public:
-	explicit OmdbService(HttpGateway const& gateway, std::string token);
+	explicit OmdbService(HttpGateway const& gateway, IApiTokenProvider& token_provider);
 
   private:
 	struct Search {
@@ -18,9 +19,6 @@ class OmdbService : public omdb::IService {
 		int season{};
 		int episode{};
 	};
-
-	void set_api_token(std::string token) final;
-	[[nodiscard]] auto get_api_token() const -> std::string_view final { return m_token; }
 
 	[[nodiscard]] auto search(Query const& query, std::optional<omdb::Type> type) const -> omdb::Result<omdb::Payload> final;
 
@@ -32,6 +30,6 @@ class OmdbService : public omdb::IService {
 	klib::TypedLogger<omdb::IService> m_log{};
 
 	klib::Ptr<HttpGateway const> m_gateway{};
-	std::string m_token{};
+	klib::Ptr<IApiTokenProvider> m_token_provider{};
 };
 } // namespace mediatool::detail

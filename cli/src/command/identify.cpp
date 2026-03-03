@@ -4,6 +4,7 @@
 #include "mediatool/util.hpp"
 #include <cstdlib>
 #include <filesystem>
+#include <print>
 #include <string_view>
 
 namespace mediatool::cli {
@@ -24,7 +25,13 @@ auto Identify::execute(Instance const& /*instance*/) -> int {
 	}
 
 	std::string_view const entry_type = fs::is_directory(path) ? "directory" : "file";
-	log.info("MediaType: {} ({})", media_name_map.to_name(*media_type), entry_type);
+	auto const title = util::identify_title(path);
+
+	std::println("path\t\t: {}", path.generic_string());
+	std::println(" path type\t: {}", entry_type);
+	std::println(" MediaType\t: {}", media_name_map.to_name(*media_type));
+	std::println(" title\t\t: {}", title);
+
 	return EXIT_SUCCESS;
 }
 } // namespace mediatool::cli

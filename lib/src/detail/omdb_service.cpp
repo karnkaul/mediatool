@@ -62,20 +62,7 @@ template <typename Type>
 }
 } // namespace
 
-OmdbService::OmdbService(HttpGateway const& gateway, std::string token) : m_gateway(&gateway) {
-	if (token.empty()) { throw Panic{"invalid (empty) API token"}; }
-	set_api_token(std::move(token));
-}
-
-void OmdbService::set_api_token(std::string token) {
-	if (token.empty()) {
-		m_log.warn("attempting to set empty API token");
-		return;
-	}
-
-	m_token = std::move(token);
-	m_log.debug("API token changed");
-}
+OmdbService::OmdbService(HttpGateway const& gateway, IApiTokenProvider& token_provider) : m_gateway(&gateway), m_token_provider(&token_provider) {}
 
 auto OmdbService::search(Query const& query, std::optional<Type> const type) const -> omdb::Result<omdb::Payload> {
 	if (!type || !is_valid(*type)) {
@@ -98,7 +85,15 @@ auto OmdbService::build_request(Query const& query, std::string_view const type)
 	return RequestBuilder{}.add_type(type).add_title(query.title).add_season(query.season).add_episode(query.episode).build();
 }
 
-auto OmdbService::create_secret() const -> http::Query { return http::Query{.key = std::string{key::apikey_v}, .value = m_token}; }
+auto OmdbService::create_secret() const -> http::Query {
+	auto const token = m_token_provider->get_api_token();
+	if (token.empty()) { throw Panic{"invalid (empty) omdb API token"}; }
+
+	return http::Query{
+		.key = std::string{key::apikey_v},
+		.value = std::string{token},
+	};
+}
 
 auto OmdbService::perform_search(Query const& query, std::string_view const type) const -> http::Result<dj::Json> {
 	return m_gateway->get_json(build_request(query, type), create_secret());
