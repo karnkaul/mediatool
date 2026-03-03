@@ -3,14 +3,13 @@
 #include "kcurl/http.hpp"
 #include "klib/log.hpp"
 #include "klib/ptr.hpp"
-#include "mediatool/api_token_provider.hpp"
 #include "mediatool/omdb.hpp"
 #include <string_view>
 
 namespace mediatool::detail {
 class OmdbService : public omdb::IService {
   public:
-	explicit OmdbService(HttpGateway const& gateway, IApiTokenProvider& token_provider);
+	explicit OmdbService(HttpGateway const& gateway, omdb::GetApiToken get_api_token);
 
   private:
 	struct Search {
@@ -30,6 +29,6 @@ class OmdbService : public omdb::IService {
 	klib::TypedLogger<omdb::IService> m_log{};
 
 	klib::Ptr<HttpGateway const> m_gateway{};
-	klib::Ptr<IApiTokenProvider> m_token_provider{};
+	mutable omdb::GetApiToken m_get_api_token{};
 };
 } // namespace mediatool::detail

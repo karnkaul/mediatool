@@ -12,6 +12,7 @@
 #include "mediatool/panic.hpp"
 #include "mediatool/util.hpp"
 #include <cstdlib>
+#include <string_view>
 
 namespace mediatool::cli {
 namespace {
@@ -39,11 +40,6 @@ auto App::run(int argc, char const* const* argv) -> int {
 	return command.execute(*m_instance);
 }
 
-auto App::get_api_token() -> std::string_view {
-	set_omdb_token();
-	return m_omdb_token;
-}
-
 auto App::parse_args(int argc, char const* const* argv) -> klib::args::ParseResult {
 	auto const version = std::format("{}", build_version_v);
 	auto const parse_info = klib::args::ParseInfo{
@@ -65,5 +61,11 @@ void App::set_omdb_token() {
 	m_omdb_token = omdb_token.as_view();
 }
 
-void App::create_instance() { m_instance = Instance::create(m_instance_ci, *this); }
+void App::create_instance() {
+	auto const get_token = [this] -> std::string_view {
+		set_omdb_token();
+		return m_omdb_token;
+	};
+	m_instance = Instance::create(m_instance_ci, get_token);
+}
 } // namespace mediatool::cli

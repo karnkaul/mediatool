@@ -5,7 +5,7 @@
 #include <string>
 
 namespace mediatool {
-enum class MediaType : std::int8_t { Movie, Episode, Season, Series, COUNT_ };
+enum class MediaType : std::int8_t { Movie, Episode, Season, Series };
 auto const media_name_map = klib::EnumNameMap<MediaType>{
 	{MediaType::Movie, "movie"},
 	{MediaType::Episode, "episode"},
