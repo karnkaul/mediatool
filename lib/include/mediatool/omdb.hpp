@@ -4,6 +4,7 @@
 #include "klib/base_types.hpp"
 #include "klib/enum_name.hpp"
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -50,6 +51,8 @@ using Payload = std::variant<Movie, Episode, Season, Series, dj::Json>;
 
 template <typename Type>
 using Result = kcurl::http::Result<Type>;
+
+using GetApiToken = std::move_only_function<std::string_view()>;
 
 class IService : public klib::Polymorphic {
   public:

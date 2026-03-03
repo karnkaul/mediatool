@@ -62,7 +62,7 @@ template <typename Type>
 }
 } // namespace
 
-OmdbService::OmdbService(HttpGateway const& gateway, IApiTokenProvider& token_provider) : m_gateway(&gateway), m_token_provider(&token_provider) {}
+OmdbService::OmdbService(HttpGateway const& gateway, omdb::GetApiToken get_api_token) : m_gateway(&gateway), m_get_api_token(std::move(get_api_token)) {}
 
 auto OmdbService::search(Query const& query, std::optional<Type> const type) const -> omdb::Result<omdb::Payload> {
 	if (!type || !is_valid(*type)) {
@@ -86,7 +86,7 @@ auto OmdbService::build_request(Query const& query, std::string_view const type)
 }
 
 auto OmdbService::create_secret() const -> http::Query {
-	auto const token = m_token_provider->get_api_token();
+	auto const token = m_get_api_token();
 	if (token.empty()) { throw Panic{"invalid (empty) omdb API token"}; }
 
 	return http::Query{

@@ -1,7 +1,6 @@
 #pragma once
 #include "klib/base_types.hpp"
 #include "klib/enum_ops.hpp"
-#include "mediatool/api_token_provider.hpp"
 #include "mediatool/omdb.hpp"
 #include <cstdint>
 #include <memory>
@@ -23,7 +22,7 @@ class Instance : public klib::Polymorphic {
   public:
 	using CreateInfo = InstanceCreateInfo;
 
-	[[nodiscard]] static auto create(CreateInfo const& create_info, IApiTokenProvider& omdb_token_provider) -> std::unique_ptr<Instance>;
+	[[nodiscard]] static auto create(CreateInfo const& create_info, omdb::GetApiToken get_omdb_api_token) -> std::unique_ptr<Instance>;
 
 	[[nodiscard]] virtual auto get_omdb_service() const -> omdb::IService const& = 0;
 };
