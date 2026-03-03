@@ -15,8 +15,13 @@ namespace {
 	return is_match(s_regex, word);
 }
 
-[[nodiscard]] auto is_season(std::string_view const word) -> bool {
+[[nodiscard]] auto is_season_id(std::string_view const word) -> bool {
 	static auto const s_regex = std::regex{R"(S[0-9]{2})"};
+	return word == "Season" || is_match(s_regex, word);
+}
+
+[[nodiscard]] auto is_episode_id(std::string_view const word) -> bool {
+	static auto const s_regex = std::regex{R"(S[0-9]{2}E[0-9]{2})"};
 	return is_match(s_regex, word);
 }
 
@@ -49,7 +54,7 @@ auto TitleParser::parse(TitleToken const& token) -> bool {
 	if (m_bracket_depth > 0) { return true; }
 
 	auto const word = token.lexeme;
-	if (is_year(word) || is_season(word) || is_resolution(word)) { return false; }
+	if (is_year(word) || is_season_id(word) || is_episode_id(word) || is_resolution(word)) { return false; }
 
 	if (!m_title.empty()) { m_title.push_back(' '); }
 	m_title += word;

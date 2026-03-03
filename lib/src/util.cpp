@@ -21,8 +21,10 @@ constexpr auto video_extensions_v = std::array{
 constexpr auto is_video_file(std::string_view const extension) { return std::ranges::find(video_extensions_v, extension) != video_extensions_v.end(); }
 
 [[nodiscard]] auto is_season_dir(fs::path const& path) {
-	static auto const s_regex = std::regex{R"(.*Season.[0-9]{2}.*)"};
-	return std::regex_match(path.filename().string(), s_regex);
+	static auto const s_regex_1 = std::regex{R"(.*Season.[0-9]{2}.*)"};
+	static auto const s_regex_2 = std::regex{R"(.*S[0-9]{2}.*)"};
+	auto const filename = path.stem().string();
+	return std::regex_match(filename, s_regex_1) || std::regex_match(filename, s_regex_2);
 }
 
 [[nodiscard]] auto is_episode(fs::path const& path) {
@@ -30,7 +32,7 @@ constexpr auto is_video_file(std::string_view const extension) { return std::ran
 	return std::regex_match(path.string(), s_regex);
 }
 
-auto identify_directory_type(fs::path const& path) -> std::optional<MediaType> {
+[[nodiscard]] auto identify_directory_type(fs::path const& path) -> std::optional<MediaType> {
 	KLIB_ASSERT(fs::is_directory(path));
 
 	auto const str = path.string();
@@ -53,7 +55,7 @@ auto identify_directory_type(fs::path const& path) -> std::optional<MediaType> {
 	return {};
 }
 
-auto identify_file_type(fs::path const& path) -> std::optional<MediaType> {
+[[nodiscard]] auto identify_file_type(fs::path const& path) -> std::optional<MediaType> {
 	KLIB_ASSERT(fs::is_regular_file(path));
 	if (!is_video_file(path.extension().string())) { return {}; }
 	if (is_episode(path)) { return MediaType::Episode; }
@@ -89,9 +91,10 @@ auto util::identify_title(fs::path const& path) -> std::string { return detail::
 auto util::extract_season_id(std::string const& name) -> std::optional<SeasonId> {
 	if (name.empty()) { return {}; }
 
-	static auto const s_regex = std::regex{R"(Season.[0-9]{2})"};
+	static auto const s_regex_1 = std::regex{R"(Season.[0-9]{2})"};
+	static auto const s_regex_2 = std::regex{R"(S[0-9]{2})"};
 	auto matches = std::smatch{};
-	if (!std::regex_search(name, matches, s_regex)) { return {}; }
+	if (!std::regex_search(name, matches, s_regex_1) && !std::regex_search(name, matches, s_regex_2)) { return {}; }
 	auto const str = std::string{matches[0]};
 	auto const number = to_int(std::string_view{str}.substr(str.size() - 2));
 	if (number <= 0) { return {}; }
