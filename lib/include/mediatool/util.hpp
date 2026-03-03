@@ -1,7 +1,8 @@
 #pragma once
 #include "klib/c_string.hpp"
-#include "mediatool/media_directory.hpp"
 #include "mediatool/types.hpp"
+#include <algorithm>
+#include <array>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -13,10 +14,13 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] auto to_int(std::string_view text, int fallback = 0) -> int;
 
-[[nodiscard]] auto identify_media_type(fs::path const& path) -> std::optional<MediaType>;
+constexpr auto video_extensions_v = std::array{
+	".mp4", ".mkv", ".avi", ".m4v", ".webm",
+};
+
+constexpr auto is_video_file(std::string_view const extension) { return std::ranges::find(video_extensions_v, extension) != video_extensions_v.end(); }
+
 [[nodiscard]] auto identify_title(fs::path const& path) -> std::string;
 [[nodiscard]] auto extract_season_id(std::string const& name) -> std::optional<SeasonId>;
 [[nodiscard]] auto extract_episode_id(std::string const& name) -> std::optional<EpisodeId>;
-
-[[nodiscard]] auto identify_media_directory(fs::path const& path) -> std::optional<MediaDirectory>;
 } // namespace mediatool::util

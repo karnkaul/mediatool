@@ -9,26 +9,28 @@ namespace mediatool {
 namespace fs = std::filesystem;
 
 struct MovieDirectory {
-	fs::path directory{};
+	fs::path path{};
 	std::string title{};
 };
 
 struct EpisodeDirectory {
 	std::optional<EpisodeId> id{};
-	fs::path directory{};
+	fs::path path{};
 	std::string title{};
 };
 
 struct SeasonDirectory {
 	std::optional<SeasonId> id{};
-	fs::path directory{};
+	fs::path path{};
 	std::string title{};
 };
 
 struct SeriesDirectory {
-	fs::path directory{};
+	fs::path path{};
 	std::string title{};
 };
 
 using MediaDirectory = std::variant<MovieDirectory, EpisodeDirectory, SeasonDirectory, SeriesDirectory>;
+
+[[nodiscard]] auto identify_media_directory(fs::path path) -> std::optional<MediaDirectory>;
 } // namespace mediatool

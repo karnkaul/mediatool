@@ -3,7 +3,6 @@
 #include "log.hpp"
 #include "mediatool/media_directory.hpp"
 #include "mediatool/types.hpp"
-#include "mediatool/util.hpp"
 #include <cstdlib>
 #include <filesystem>
 #include <print>
@@ -23,7 +22,7 @@ auto Identify::execute(Instance const& /*instance*/) -> int {
 		return EXIT_FAILURE;
 	}
 
-	auto const media_directory = util::identify_media_directory(path);
+	auto const media_directory = identify_media_directory(path);
 	if (!media_directory) {
 		log.error("unrecognized media directory: '{}'", m_directory);
 		return EXIT_FAILURE;
