@@ -20,6 +20,9 @@ constexpr auto video_extensions_v = std::array{
 
 constexpr auto is_video_file(std::string_view const extension) { return std::ranges::find(video_extensions_v, extension) != video_extensions_v.end(); }
 
+[[nodiscard]] auto is_season_directory(fs::path const& path) -> bool;
+[[nodiscard]] auto is_episode(fs::path const& path) -> bool;
+
 [[nodiscard]] auto identify_title(fs::path const& path) -> std::string;
 [[nodiscard]] auto extract_season_id(std::string const& name) -> std::optional<SeasonId>;
 [[nodiscard]] auto extract_episode_id(std::string const& name) -> std::optional<EpisodeId>;

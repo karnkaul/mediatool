@@ -6,11 +6,17 @@
 
 namespace mediatool {
 enum class MediaType : std::int8_t { Movie, Episode, Season, Series };
-auto const media_name_map = klib::EnumNameMap<MediaType>{
+auto const media_type_name_map = klib::EnumNameMap<MediaType>{
 	{MediaType::Movie, "movie"},
 	{MediaType::Episode, "episode"},
 	{MediaType::Season, "season"},
 	{MediaType::Series, "series"},
+};
+
+enum class EntryType : std::int8_t { Directory, File };
+auto const entry_type_name_map = klib::EnumNameMap<EntryType>{
+	{EntryType::Directory, "directory"},
+	{EntryType::File, "file"},
 };
 
 class SeasonId {

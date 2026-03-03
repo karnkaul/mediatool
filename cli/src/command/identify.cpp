@@ -1,7 +1,6 @@
 #include "command/identify.hpp"
-#include "klib/visitor.hpp"
 #include "log.hpp"
-#include "mediatool/media_directory.hpp"
+#include "mediatool/entity.hpp"
 #include "mediatool/types.hpp"
 #include <cstdlib>
 #include <filesystem>
@@ -16,27 +15,15 @@ Identify::Identify() {
 }
 
 auto Identify::execute(Instance const& /*instance*/) -> int {
-	auto const path = fs::path{m_directory};
-	if (!fs::is_directory(path)) {
-		log.error("not a directory: '{}'", m_directory);
+	auto const entity = identify_entity(m_directory);
+	if (!entity) {
+		log.error("unrecognized path: '{}'", m_directory);
 		return EXIT_FAILURE;
 	}
 
-	auto const media_directory = identify_media_directory(path);
-	if (!media_directory) {
-		log.error("unrecognized media directory: '{}'", m_directory);
-		return EXIT_FAILURE;
-	}
-
-	auto const visitor = klib::Visitor{
-		[](MovieDirectory const& movie) { std::println(" directory type: movie\n title: {}", movie.title); },
-		[](SeasonDirectory const& season) {
-			std::println(" directory type: season\n title: {}", season.title);
-			if (season.id) { std::println(" id: {}", season.id->as_string_view()); }
-		},
-		[](SeriesDirectory const& series) { std::println(" directory type: series\n title: {}", series.title); },
-	};
-	std::visit(visitor, *media_directory);
+	auto const entry_type = entry_type_name_map.to_name(entity->entry_type);
+	auto const media_type = media_type_name_map.to_name(entity->media_type);
+	std::println(" entry type: {}\n media type: {}\n title: {}", entry_type, media_type, entity->title);
 
 	return EXIT_SUCCESS;
 }

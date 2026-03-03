@@ -28,6 +28,18 @@ auto util::identify_title(fs::path const& path) -> std::string {
 	return detail::TitleParser{}.parse(stem.string());
 }
 
+auto util::is_season_directory(fs::path const& path) -> bool {
+	static auto const s_regex_1 = std::regex{R"(.*Season.[0-9]{2}.*)"};
+	static auto const s_regex_2 = std::regex{R"(.*S[0-9]{2}.*)"};
+	auto const filename = path.stem().string();
+	return std::regex_match(filename, s_regex_1) || std::regex_match(filename, s_regex_2);
+}
+
+auto util::is_episode(fs::path const& path) -> bool {
+	static auto const s_regex = std::regex{R"(.*S[0-9]{2}E[0-9]{2}.*)"};
+	return std::regex_match(path.string(), s_regex);
+}
+
 auto util::extract_season_id(std::string const& name) -> std::optional<SeasonId> {
 	if (name.empty()) { return {}; }
 
