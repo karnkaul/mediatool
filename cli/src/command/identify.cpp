@@ -1,5 +1,7 @@
 #include "command/identify.hpp"
+#include "klib/visitor.hpp"
 #include "log.hpp"
+#include "mediatool/media_directory.hpp"
 #include "mediatool/types.hpp"
 #include "mediatool/util.hpp"
 #include <cstdlib>
@@ -8,29 +10,38 @@
 #include <string_view>
 
 namespace mediatool::cli {
-namespace fs = std::filesystem;
-
 Identify::Identify() {
 	m_args = {
-		klib::args::positional_required(m_path, "path"),
+		klib::args::positional_required(m_directory, "directory"),
 	};
 }
 
 auto Identify::execute(Instance const& /*instance*/) -> int {
-	auto const path = fs::path{m_path};
-	auto const media_type = util::identify_media_type(path);
-	if (!media_type) {
-		log.error("unknown MediaType: '{}'", m_path);
+	auto const path = fs::path{m_directory};
+	if (!fs::is_directory(path)) {
+		log.error("not a directory: '{}'", m_directory);
 		return EXIT_FAILURE;
 	}
 
-	std::string_view const entry_type = fs::is_directory(path) ? "directory" : "file";
-	auto const title = util::identify_title(path);
+	auto const media_directory = util::identify_media_directory(path);
+	if (!media_directory) {
+		log.error("unrecognized media directory: '{}'", m_directory);
+		return EXIT_FAILURE;
+	}
 
-	std::println("path\t\t: {}", path.generic_string());
-	std::println(" path type\t: {}", entry_type);
-	std::println(" MediaType\t: {}", media_name_map.to_name(*media_type));
-	std::println(" title\t\t: {}", title);
+	auto const visitor = klib::Visitor{
+		[](MovieDirectory const& movie) { std::println(" directory type: movie\n title: {}", movie.title); },
+		[](EpisodeDirectory const& episode) {
+			std::println(" directory type: episode\n title: {}", episode.title);
+			if (episode.id) { std::println(" id: {}", episode.id->as_string_view()); }
+		},
+		[](SeasonDirectory const& season) {
+			std::println(" directory type: season\n title: {}", season.title);
+			if (season.id) { std::println(" id: {}", season.id->as_string_view()); }
+		},
+		[](SeriesDirectory const& series) { std::println(" directory type: series\n title: {}", series.title); },
+	};
+	std::visit(visitor, *media_directory);
 
 	return EXIT_SUCCESS;
 }

@@ -1,6 +1,7 @@
 #include "mediatool/util.hpp"
 #include "detail/title_parser.hpp"
 #include "klib/assert.hpp"
+#include "mediatool/media_directory.hpp"
 #include "mediatool/types.hpp"
 #include <algorithm>
 #include <array>
@@ -61,6 +62,37 @@ constexpr auto is_video_file(std::string_view const extension) { return std::ran
 	if (is_episode(path)) { return MediaType::Episode; }
 	return MediaType::Movie;
 }
+
+class MediaDirectoryIdentifier {
+  public:
+	[[nodiscard]] auto operator()(fs::path path) -> std::optional<MediaDirectory> {
+		if (!fs::is_directory(path)) { return {}; }
+		return identify_media_type(path).and_then([&](MediaType const mt) { return handle_directory(std::move(path), mt); });
+	}
+
+  private:
+	[[nodiscard]] static auto handle_directory(fs::path path, MediaType const media_type) -> std::optional<MediaDirectory> {
+		auto title = identify_title(path);
+		switch (media_type) {
+		case MediaType::Movie: return MovieDirectory{.directory = std::move(path), .title = std::move(title)};
+		case MediaType::Episode: {
+			auto title = identify_title(path);
+			auto id = extract_episode_id(path.stem().string());
+			return EpisodeDirectory{.id = std::move(id), .directory = std::move(path), .title = std::move(title)};
+		}
+		case MediaType::Season: {
+			auto title = identify_title(path);
+			auto id = extract_season_id(path.stem().string());
+			return SeasonDirectory{.id = std::move(id), .directory = std::move(path), .title = std::move(title)};
+		}
+		case MediaType::Series: return SeriesDirectory{.directory = std::move(path), .title = std::move(title)};
+
+		default: break;
+		}
+
+		return {};
+	}
+};
 } // namespace
 } // namespace util
 
@@ -113,4 +145,6 @@ auto util::extract_episode_id(std::string const& name) -> std::optional<EpisodeI
 	if (number <= 0 || season <= 0) { return {}; }
 	return EpisodeId{season, number};
 }
+
+auto util::identify_media_directory(fs::path const& path) -> std::optional<MediaDirectory> { return MediaDirectoryIdentifier{}(path); }
 } // namespace mediatool

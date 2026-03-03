@@ -1,5 +1,6 @@
 #pragma once
 #include "klib/c_string.hpp"
+#include "mediatool/media_directory.hpp"
 #include "mediatool/types.hpp"
 #include <filesystem>
 #include <optional>
@@ -16,4 +17,6 @@ namespace fs = std::filesystem;
 [[nodiscard]] auto identify_title(fs::path const& path) -> std::string;
 [[nodiscard]] auto extract_season_id(std::string const& name) -> std::optional<SeasonId>;
 [[nodiscard]] auto extract_episode_id(std::string const& name) -> std::optional<EpisodeId>;
+
+[[nodiscard]] auto identify_media_directory(fs::path const& path) -> std::optional<MediaDirectory>;
 } // namespace mediatool::util

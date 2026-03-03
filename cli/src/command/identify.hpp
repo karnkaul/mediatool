@@ -12,6 +12,6 @@ class Identify : public Command {
 	[[nodiscard]] auto get_name() const -> std::string_view final { return name_v; }
 	[[nodiscard]] auto execute(Instance const& instance) -> int final;
 
-	std::string_view m_path{};
+	std::string_view m_directory{};
 };
 } // namespace mediatool::cli
