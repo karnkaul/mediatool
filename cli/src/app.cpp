@@ -25,7 +25,7 @@ auto App::run(int argc, char const* const* argv) -> int {
 	auto const parse_result = parse_args(argc, argv);
 	if (parse_result.early_return()) { return parse_result.get_return_code(); }
 
-	log.info("mediatool: {}", build_version_v);
+	log.debug("{}", build_version_v);
 
 	create_instance();
 

@@ -1,4 +1,5 @@
 #include "mediatool/util.hpp"
+#include "detail/title_parser.hpp"
 #include "klib/assert.hpp"
 #include "mediatool/types.hpp"
 #include <algorithm>
@@ -82,6 +83,8 @@ auto util::identify_media_type(fs::path const& path) -> std::optional<MediaType>
 	if (fs::is_regular_file(path)) { return identify_file_type(path); }
 	return {};
 }
+
+auto util::identify_title(fs::path const& path) -> std::string { return detail::TitleParser{}.parse(path.stem().string()); }
 
 auto util::extract_season_id(std::string const& name) -> std::optional<SeasonId> {
 	if (name.empty()) { return {}; }
