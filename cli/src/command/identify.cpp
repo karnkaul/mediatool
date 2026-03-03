@@ -30,10 +30,6 @@ auto Identify::execute(Instance const& /*instance*/) -> int {
 
 	auto const visitor = klib::Visitor{
 		[](MovieDirectory const& movie) { std::println(" directory type: movie\n title: {}", movie.title); },
-		[](EpisodeDirectory const& episode) {
-			std::println(" directory type: episode\n title: {}", episode.title);
-			if (episode.id) { std::println(" id: {}", episode.id->as_string_view()); }
-		},
 		[](SeasonDirectory const& season) {
 			std::println(" directory type: season\n title: {}", season.title);
 			if (season.id) { std::println(" id: {}", season.id->as_string_view()); }

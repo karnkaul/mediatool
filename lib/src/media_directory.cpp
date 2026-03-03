@@ -57,11 +57,6 @@ namespace {
 	auto title = util::identify_title(path);
 	switch (media_type) {
 	case MediaType::Movie: return MovieDirectory{.path = std::move(path), .title = std::move(title)};
-	case MediaType::Episode: {
-		auto title = util::identify_title(path);
-		auto id = util::extract_episode_id(path.stem().string());
-		return EpisodeDirectory{.id = std::move(id), .path = std::move(path), .title = std::move(title)};
-	}
 	case MediaType::Season: {
 		auto title = util::identify_title(path);
 		auto id = util::extract_season_id(path.stem().string());
@@ -69,7 +64,8 @@ namespace {
 	}
 	case MediaType::Series: return SeriesDirectory{.path = std::move(path), .title = std::move(title)};
 
-	default: break;
+	default:
+	case MediaType::Episode: break;
 	}
 	return {};
 }

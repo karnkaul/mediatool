@@ -13,12 +13,6 @@ struct MovieDirectory {
 	std::string title{};
 };
 
-struct EpisodeDirectory {
-	std::optional<EpisodeId> id{};
-	fs::path path{};
-	std::string title{};
-};
-
 struct SeasonDirectory {
 	std::optional<SeasonId> id{};
 	fs::path path{};
@@ -30,7 +24,7 @@ struct SeriesDirectory {
 	std::string title{};
 };
 
-using MediaDirectory = std::variant<MovieDirectory, EpisodeDirectory, SeasonDirectory, SeriesDirectory>;
+using MediaDirectory = std::variant<MovieDirectory, SeasonDirectory, SeriesDirectory>;
 
 [[nodiscard]] auto identify_media_directory(fs::path path) -> std::optional<MediaDirectory>;
 } // namespace mediatool

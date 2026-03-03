@@ -22,7 +22,11 @@ auto util::to_int(std::string_view const text, int const fallback) -> int {
 	return ret;
 }
 
-auto util::identify_title(fs::path const& path) -> std::string { return detail::TitleParser{}.parse(path.stem().string()); }
+auto util::identify_title(fs::path const& path) -> std::string {
+	auto stem = path.stem();
+	if (stem.empty()) { stem = path.parent_path().stem(); }
+	return detail::TitleParser{}.parse(stem.string());
+}
 
 auto util::extract_season_id(std::string const& name) -> std::optional<SeasonId> {
 	if (name.empty()) { return {}; }
