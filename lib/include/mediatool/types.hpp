@@ -16,12 +16,6 @@ auto const media_type_name_map = klib::EnumNameMap<MediaType>{
 	{MediaType::Series, "series"},
 };
 
-enum class EntryType : std::int8_t { Directory, File };
-auto const entry_type_name_map = klib::EnumNameMap<EntryType>{
-	{EntryType::Directory, "directory"},
-	{EntryType::File, "file"},
-};
-
 class SeasonId {
   public:
 	explicit SeasonId(int number);

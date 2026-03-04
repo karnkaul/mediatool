@@ -1,29 +1,52 @@
 #include "command/identify.hpp"
+#include "klib/visitor.hpp"
 #include "log.hpp"
-#include "mediatool/entity.hpp"
-#include "mediatool/types.hpp"
+#include "mediatool/manifest.hpp"
 #include <cstdlib>
-#include <filesystem>
 #include <print>
-#include <string_view>
 
 namespace mediatool::cli {
+namespace {
+void print_episode_files(std::string_view const header, std::span<Episode const> episodes) {
+	std::println("{}", header);
+	for (auto const& episode : episodes) { std::println(" {} - {}", episode.id.as_string_view(), episode.path.filename().generic_string()); }
+}
+} // namespace
+
 Identify::Identify() {
 	m_args = {
-		klib::args::positional_required(m_directory, "directory"),
+		klib::args::positional_required(m_path, "path"),
 	};
 }
 
 auto Identify::execute(Instance const& /*instance*/) -> int {
-	auto const entity = identify_entity(m_directory);
-	if (!entity) {
-		log.error("unrecognized path: '{}'", m_directory);
+	auto const manifest = build_manifest(m_path);
+	if (!manifest) {
+		log.error("failed to build manifest for: '{}'", m_path);
 		return EXIT_FAILURE;
 	}
 
-	auto const entry_type = entry_type_name_map.to_name(entity->entry_type);
-	auto const media_type = media_type_name_map.to_name(entity->media_type);
-	std::println(" entry type: {}\n media type: {}\n title: {}", entry_type, media_type, entity->title);
+	auto const visitor = klib::Visitor{
+		[](MovieManifest const& manifest) {
+			std::println(" media type: movie\n video: {}\n title: {}\n directory: {}", manifest.movie.path.generic_string(), manifest.title,
+						 manifest.directory.generic_string());
+		},
+		[](EpisodeManifest const& manifest) {
+			std::println(" media type: episode\n video: {}\n title: {} \n directory: {}", manifest.episode.path.generic_string(), manifest.title,
+						 manifest.directory.generic_string());
+		},
+		[](SeasonManifest const& manifest) {
+			std::println(" media type: season\n id: {}\n directory: {}\n title: {}", manifest.season.id.as_string_view(), manifest.season.path.generic_string(),
+						 manifest.title);
+			print_episode_files("episodes", manifest.season.episodes);
+		},
+		[](SeriesManifest const& manifest) {
+			std::println(" media type: series\n directory: {}\n title: {}", manifest.series.path.generic_string(), manifest.title);
+			std::println(" seasons:");
+			for (auto const& season : manifest.series.seasons) { print_episode_files(season.id.as_string_view(), season.episodes); }
+		},
+	};
+	std::visit(visitor, *manifest);
 
 	return EXIT_SUCCESS;
 }

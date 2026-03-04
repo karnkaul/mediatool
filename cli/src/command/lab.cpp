@@ -3,13 +3,9 @@
 #include "log.hpp"
 #include "mediatool/manifest.hpp"
 #include <cstdlib>
-#include <filesystem>
 #include <print>
-#include <string_view>
 
 namespace mediatool::cli {
-namespace fs = std::filesystem;
-
 namespace {
 void print_episode_files(std::string_view const header, std::span<Episode const> episodes) {
 	std::println("{}", header);

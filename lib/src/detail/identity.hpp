@@ -4,15 +4,17 @@
 #include <optional>
 #include <string>
 
-namespace mediatool {
+namespace mediatool::detail {
 namespace fs = std::filesystem;
 
-struct Entity {
+enum class EntryType : std::int8_t { Directory, File };
+
+struct Identity {
 	EntryType entry_type{};
 	MediaType media_type{};
 	fs::path path{};
 	std::string title{};
 };
 
-[[nodiscard]] auto identify_entity(fs::path path) -> std::optional<Entity>;
-} // namespace mediatool
+[[nodiscard]] auto identify(fs::path path) -> std::optional<Identity>;
+} // namespace mediatool::detail

@@ -1,11 +1,12 @@
+#include "detail/identity.hpp"
 #include "klib/assert.hpp"
-#include "mediatool/entity.hpp"
 #include "mediatool/types.hpp"
 #include "mediatool/util.hpp"
 #include <filesystem>
 #include <optional>
 
 namespace mediatool {
+namespace detail {
 namespace {
 struct Types {
 	EntryType entry_type{};
@@ -58,9 +59,9 @@ struct Types {
 	return Types{.entry_type = *entry_type, .media_type = *media_type};
 }
 
-[[nodiscard]] auto to_entity(fs::path path, Types const types) {
+[[nodiscard]] auto to_identity(fs::path path, Types const types) {
 	auto title = util::identify_title(path);
-	return Entity{
+	return Identity{
 		.entry_type = types.entry_type,
 		.media_type = types.media_type,
 		.path = std::move(path),
@@ -68,8 +69,9 @@ struct Types {
 	};
 }
 } // namespace
-} // namespace mediatool
+} // namespace detail
 
-auto mediatool::identify_entity(fs::path path) -> std::optional<Entity> {
-	return identify_types(path).transform([&](Types const types) { return to_entity(std::move(path), types); });
+auto detail::identify(fs::path path) -> std::optional<Identity> {
+	return identify_types(path).transform([&](Types const types) { return to_identity(std::move(path), types); });
 }
+} // namespace mediatool
