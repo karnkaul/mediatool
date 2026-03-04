@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "command/identify.hpp"
+#include "command/lab.hpp"
 #include "command/search.hpp"
 #include "klib/args/arg.hpp"
 #include "klib/args/parse.hpp"
@@ -22,6 +23,7 @@ constexpr auto env_omdb_token_key_v = klib::CString{"MEDIATOOL_OMDB_TOKEN"};
 auto App::run(int argc, char const* const* argv) -> int {
 	m_commands.push_back(std::make_unique<Search>());
 	m_commands.push_back(std::make_unique<Identify>());
+	m_commands.push_back(std::make_unique<Lab>());
 
 	auto const parse_result = parse_args(argc, argv);
 	if (parse_result.early_return()) { return parse_result.get_return_code(); }

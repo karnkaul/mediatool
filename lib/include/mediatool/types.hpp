@@ -2,9 +2,12 @@
 #include "klib/enum_name.hpp"
 #include <compare>
 #include <cstdint>
+#include <filesystem>
 #include <string>
 
 namespace mediatool {
+namespace fs = std::filesystem;
+
 enum class MediaType : std::int8_t { Movie, Episode, Season, Series };
 auto const media_type_name_map = klib::EnumNameMap<MediaType>{
 	{MediaType::Movie, "movie"},
@@ -47,5 +50,27 @@ class EpisodeId {
 	int m_season{};
 	int m_number{};
 	std::string m_str{};
+};
+
+struct Movie {
+	fs::path path{};
+	std::vector<fs::path> subtitles{};
+};
+
+struct Episode {
+	EpisodeId id;
+	fs::path path{};
+	std::vector<fs::path> subtitles{};
+};
+
+struct Season {
+	SeasonId id;
+	fs::path path{};
+	std::vector<Episode> episodes{};
+};
+
+struct Series {
+	fs::path path{};
+	std::vector<Season> seasons{};
 };
 } // namespace mediatool
