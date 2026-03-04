@@ -2,11 +2,11 @@
 #include "command/command.hpp"
 
 namespace mediatool::cli {
-class Identify : public Command {
+class Lab : public Command {
   public:
-	static constexpr auto name_v = std::string_view{"identify"};
+	static constexpr auto name_v = std::string_view{"lab"};
 
-	explicit Identify();
+	explicit Lab();
 
   private:
 	[[nodiscard]] auto get_name() const -> std::string_view final { return name_v; }

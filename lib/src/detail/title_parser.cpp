@@ -52,9 +52,23 @@ auto TitleParser::parse(TitleToken const& token) -> bool {
 	}
 
 	if (m_bracket_depth > 0) { return true; }
+	if (m_skip_next) {
+		m_skip_next = false;
+		return true;
+	}
 
 	auto const word = token.lexeme;
-	if (is_year(word) || is_season_id(word) || is_episode_id(word) || is_resolution(word)) { return false; }
+	if (word == "-") { return true; }
+
+	if (is_season_id(word)) {
+		if (m_title.empty()) {
+			m_skip_next = true; // Season XX, skip XX
+			return true;
+		}
+		return false;
+	}
+
+	if (is_year(word) || is_episode_id(word) || is_resolution(word)) { return m_title.empty(); }
 
 	if (!m_title.empty()) { m_title.push_back(' '); }
 	m_title += word;
