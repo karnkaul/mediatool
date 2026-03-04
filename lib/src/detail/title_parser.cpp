@@ -51,11 +51,20 @@ auto TitleParser::parse(TitleToken const& token) -> bool {
 	default: throw Panic{"internal error: unexpected TitleTokenType"};
 	}
 
-	if (m_bracket_depth > 0) { return true; }
+	if (m_bracket_depth > 0 || m_skip_next) { return true; }
 
 	auto const word = token.lexeme;
 	if (word == "-") { return true; }
-	if (is_year(word) || is_season_id(word) || is_episode_id(word) || is_resolution(word)) { return m_title.empty(); }
+
+	if (is_season_id(word)) {
+		if (m_title.empty()) {
+			m_skip_next = true; // Season XX, skip XX
+			return true;
+		}
+		return false;
+	}
+
+	if (is_year(word) || is_episode_id(word) || is_resolution(word)) { return m_title.empty(); }
 
 	if (!m_title.empty()) { m_title.push_back(' '); }
 	m_title += word;

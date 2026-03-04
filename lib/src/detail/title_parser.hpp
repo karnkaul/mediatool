@@ -97,5 +97,6 @@ class TitleParser {
 
 	std::string m_title{};
 	int m_bracket_depth{0};
+	bool m_skip_next{};
 };
 } // namespace mediatool::detail
