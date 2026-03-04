@@ -12,3 +12,7 @@ file(GLOB_RECURSE sources LIST_DIRECTORIES false "src/*.[hc]pp")
 target_sources(${PROJECT_NAME} PRIVATE
   ${sources}
 )
+
+message(STATUS "[${package_name}] setting up install")
+include(GNUInstallDirs)
+install(TARGETS ${PROJECT_NAME})
