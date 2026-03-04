@@ -1,6 +1,6 @@
 #include "mediatool/manifest.hpp"
 #include "detail/identity.hpp"
-#include "mediatool/media_file.hpp"
+#include "detail/media_file.hpp"
 #include "mediatool/types.hpp"
 #include "mediatool/util.hpp"
 #include <cstdint>

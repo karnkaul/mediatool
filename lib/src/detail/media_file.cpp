@@ -1,8 +1,9 @@
-#include "mediatool/media_file.hpp"
+#include "detail/media_file.hpp"
 #include "mediatool/util.hpp"
 #include <filesystem>
 
 namespace mediatool {
+namespace detail {
 namespace {
 class Collector {
   public:
@@ -57,6 +58,7 @@ class Collector {
 	std::vector<MediaFile> m_files{};
 };
 } // namespace
-} // namespace mediatool
+} // namespace detail
 
-auto mediatool::collect_media_files(fs::path const& path) -> std::vector<MediaFile> { return Collector{}.collect(path); }
+auto detail::collect_media_files(fs::path const& path) -> std::vector<MediaFile> { return Collector{}.collect(path); }
+} // namespace mediatool

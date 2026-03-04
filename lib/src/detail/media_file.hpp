@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace mediatool {
+namespace mediatool::detail {
 namespace fs = std::filesystem;
 
 struct MediaFile {
@@ -19,4 +19,4 @@ struct MediaFile {
 };
 
 [[nodiscard]] auto collect_media_files(fs::path const& path) -> std::vector<MediaFile>;
-} // namespace mediatool
+} // namespace mediatool::detail
