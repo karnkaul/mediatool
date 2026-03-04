@@ -1,122 +1,174 @@
 #include "mediatool/manifest.hpp"
 #include "detail/identity.hpp"
+#include "mediatool/media_file.hpp"
 #include "mediatool/types.hpp"
 #include "mediatool/util.hpp"
+#include <cstdint>
 #include <filesystem>
+#include <string_view>
 #include <utility>
 
 namespace mediatool::detail {
 namespace {
-[[nodiscard]] auto largest_video_file_in(fs::path const& directory) -> fs::path {
-	struct Candidate {
-		fs::path path{};
-		std::uint64_t size{};
+class Builder {
+  public:
+	[[nodiscard]] auto build(fs::path const& path) -> std::optional<Manifest> {
+		return detail::identify(path).and_then([this](Identity identity) { return build(std::move(identity)); });
+	}
+
+  private:
+	struct Directory {
+		[[nodiscard]] static auto build(fs::path const& path) -> Directory {
+			auto ret = Directory{};
+			ret.videos = collect_media_files(path);
+			auto const transfer = [&](MediaFile& file) {
+				if (file.type == MediaFile::Type::Subtitle) {
+					ret.subtitles.push_back(std::move(file.path));
+					return true;
+				}
+				return false;
+			};
+			std::erase_if(ret.videos, transfer);
+			return ret;
+		}
+
+		std::vector<MediaFile> videos{};
+		std::vector<fs::path> subtitles{};
 	};
-	auto ret = Candidate{};
-	for (auto const& it : fs::recursive_directory_iterator{directory}) {
-		if (!it.is_regular_file() || !util::is_video_file(it.path().extension().string())) { continue; }
-		auto const size = std::uint64_t(fs::file_size(it.path()));
-		if (size >= ret.size) { ret = Candidate{.path = it.path(), .size = size}; }
-	}
-	return std::move(ret.path);
-}
 
-// TODO: collect subs
-
-void collect_episodes(fs::path const& directory, std::vector<Episode>& out) {
-	for (auto const& it : fs::directory_iterator{directory}) {
-		if (!it.is_regular_file() || !util::is_video_file(it.path().extension().string())) { continue; }
-		auto id = util::extract_episode_id(it.path().stem().string());
-		if (!id) { continue; }
-		out.push_back(Episode{.id = std::move(*id), .path = it.path()});
-	}
-}
-
-void collect_seasons(fs::path const& directory, std::vector<Season>& out) {
-	for (auto const& it : fs::directory_iterator{directory}) {
-		if (!it.is_directory() || !util::is_season_directory(it.path())) { continue; }
-		auto id = util::extract_season_id(it.path().stem().string());
-		if (!id) { continue; }
-		auto& season = out.emplace_back(Season{.id = std::move(*id)});
-		collect_episodes(it.path(), season.episodes);
-	}
-}
-
-[[nodiscard]] auto build_movie_manifest(Identity identity) -> Manifest {
-	auto ret = MovieManifest{.title = std::move(identity.title)};
-	switch (identity.entry_type) {
-	case EntryType::Directory: {
-		ret.directory = std::move(identity.path);
-		ret.movie.path = largest_video_file_in(ret.directory);
-		break;
-	}
-	case EntryType::File: ret.movie.path = std::move(identity.path); break;
-	default: return {};
-	}
-	return ret;
-}
-
-[[nodiscard]] auto build_episode_manifest(Identity identity) -> std::optional<Manifest> {
-	auto directory = fs::path{};
-	auto video = fs::path{};
-	switch (identity.entry_type) {
-	case EntryType::Directory: {
-		directory = std::move(identity.path);
-		video = largest_video_file_in(directory);
-		break;
-	}
-	case EntryType::File: video = std::move(identity.path); break;
-	default: return {};
+	[[nodiscard]] auto largest_video_file() const -> fs::path {
+		struct Candidate {
+			fs::path path{};
+			std::uint64_t size{};
+		};
+		auto ret = Candidate{};
+		for (auto const& media_file : m_current_dir.videos) {
+			if (media_file.size >= ret.size) { ret = Candidate{.path = media_file.path, .size = media_file.size}; }
+		}
+		return std::move(ret.path);
 	}
 
-	auto id = util::extract_episode_id(video.stem().string());
-	if (!id) { return {}; }
-	auto episode = Episode{.id = std::move(*id), .path = std::move(video)};
-	return EpisodeManifest{.episode = std::move(episode), .title = std::move(identity.title), .directory = std::move(directory)};
-}
-
-[[nodiscard]] auto build_season_manifest(Identity identity) -> std::optional<Manifest> {
-	auto id = util::extract_season_id(identity.path.filename().string());
-	if (!id) { return {}; }
-	auto season = Season{.id = std::move(*id), .path = std::move(identity.path)};
-	collect_episodes(season.path, season.episodes);
-	return SeasonManifest{.season = std::move(season), .title = std::move(identity.title)};
-}
-
-[[nodiscard]] auto build_series_manifest(Identity identity) -> Manifest {
-	auto series = Series{.path = std::move(identity.path)};
-	collect_seasons(series.path, series.seasons);
-	return SeriesManifest{.series = std::move(series), .title = std::move(identity.title)};
-}
-
-[[nodiscard]] auto build_directory_manifest(Identity identity) -> std::optional<Manifest> {
-	switch (identity.media_type) {
-	case MediaType::Movie: return build_movie_manifest(std::move(identity));
-	case MediaType::Episode: return build_episode_manifest(std::move(identity));
-	case MediaType::Season: return build_season_manifest(std::move(identity));
-	case MediaType::Series: return build_series_manifest(std::move(identity));
-	default: return {};
+	void fill_subtitles(std::vector<fs::path>& out, std::string_view const stem) {
+		auto const transfer = [&](fs::path& subtitle) {
+			if (!subtitle.generic_string().contains(stem)) { return false; }
+			out.push_back(std::move(subtitle));
+			return true;
+		};
+		std::erase_if(m_current_dir.subtitles, transfer);
 	}
-}
 
-[[nodiscard]] auto build_file_manifest(Identity identity) -> std::optional<Manifest> {
-	switch (identity.media_type) {
-	case MediaType::Movie: return build_movie_manifest(std::move(identity));
-	case MediaType::Episode: return build_episode_manifest(std::move(identity));
-	default: return {};
-	}
-}
-
-auto build_manifest(fs::path const& path) -> std::optional<Manifest> {
-	return detail::identify(path).and_then([&](Identity identity) {
+	auto build(Identity identity) -> std::optional<Manifest> {
 		switch (identity.entry_type) {
-		case EntryType::Directory: return build_directory_manifest(std::move(identity));
-		case EntryType::File: return build_file_manifest(std::move(identity));
+		case EntryType::Directory: return build_directory(std::move(identity));
+		case EntryType::File: return build_file(std::move(identity));
 		default: std::unreachable();
 		}
-	});
-}
+	}
+
+	auto build_file(Identity identity) -> std::optional<Manifest> {
+		m_current_dir = Directory::build(identity.path);
+		switch (identity.media_type) {
+		case MediaType::Movie: return build_movie(std::move(identity));
+		case MediaType::Episode: return build_episode(std::move(identity));
+		default: return {};
+		}
+	}
+
+	auto build_directory(Identity identity) -> std::optional<Manifest> {
+		switch (identity.media_type) {
+		case MediaType::Movie: return build_movie(std::move(identity));
+		case MediaType::Episode: return build_episode(std::move(identity));
+		case MediaType::Season: return build_season(std::move(identity));
+		case MediaType::Series: return build_series(std::move(identity));
+		default: return {};
+		}
+	}
+
+	auto build_movie(Identity identity) -> Manifest {
+		m_current_dir = Directory::build(identity.path);
+		auto ret = MovieManifest{.title = std::move(identity.title)};
+		switch (identity.entry_type) {
+		case EntryType::Directory: {
+			ret.directory = std::move(identity.path);
+			ret.movie.path = largest_video_file();
+			break;
+		}
+		case EntryType::File: ret.movie.path = std::move(identity.path); break;
+		default: return {};
+		}
+		fill_subtitles(ret.movie.subtitles, ret.movie.path.stem().string());
+		return ret;
+	}
+
+	auto build_episode(Identity identity) -> std::optional<Manifest> {
+		m_current_dir = Directory::build(identity.path);
+		auto directory = fs::path{};
+		auto video = fs::path{};
+		switch (identity.entry_type) {
+		case EntryType::Directory: {
+			directory = std::move(identity.path);
+			video = largest_video_file();
+			break;
+		}
+		case EntryType::File: video = std::move(identity.path); break;
+		default: return {};
+		}
+
+		return get_episode(video).transform([&](Episode episode) {
+			return EpisodeManifest{.episode = std::move(episode), .title = std::move(identity.title), .directory = std::move(directory)};
+		});
+	}
+
+	auto build_season(Identity identity) -> std::optional<Manifest> {
+		m_current_dir = Directory::build(identity.path);
+		return get_season(std::move(identity.path)).transform([&](Season season) {
+			return SeasonManifest{.season = std::move(season), .title = std::move(identity.title)};
+		});
+	}
+
+	auto build_series(Identity identity) -> Manifest {
+		auto series = Series{.path = std::move(identity.path)};
+		for (auto const& it : fs::directory_iterator{series.path}) {
+			m_current_dir = Directory::build(it.path());
+			auto season = get_season(it.path());
+			if (!season) { continue; }
+			series.seasons.push_back(std::move(*season));
+		}
+		return SeriesManifest{.series = std::move(series), .title = std::move(identity.title)};
+	}
+
+	auto get_season(fs::path path) -> std::optional<Season> {
+		return util::extract_season_id(path.filename().string()).transform([&](SeasonId id) {
+			return Season{
+				.id = std::move(id),
+				.path = std::move(path),
+				.episodes = get_episodes(),
+			};
+		});
+	}
+
+	auto get_episodes() -> std::vector<Episode> {
+		auto ret = std::vector<Episode>{};
+		for (auto const& media_file : m_current_dir.videos) {
+			auto episode = get_episode(media_file.path);
+			if (!episode) { continue; }
+			ret.push_back(std::move(*episode));
+		}
+		return ret;
+	}
+
+	[[nodiscard]] auto get_episode(fs::path path) -> std::optional<Episode> {
+		auto const stem = path.stem().string();
+		return util::extract_episode_id(stem).transform([&](EpisodeId id) {
+			auto ret = Episode{.id = std::move(id), .path = std::move(path)};
+			fill_subtitles(ret.subtitles, stem);
+			return ret;
+		});
+	}
+
+	Directory m_current_dir{};
+};
 } // namespace
 } // namespace mediatool::detail
 
-auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> { return detail::build_manifest(path); }
+auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> { return detail::Builder{}.build(fs::canonical(path)); }

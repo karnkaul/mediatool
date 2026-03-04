@@ -51,7 +51,11 @@ auto TitleParser::parse(TitleToken const& token) -> bool {
 	default: throw Panic{"internal error: unexpected TitleTokenType"};
 	}
 
-	if (m_bracket_depth > 0 || m_skip_next) { return true; }
+	if (m_bracket_depth > 0) { return true; }
+	if (m_skip_next) {
+		m_skip_next = false;
+		return true;
+	}
 
 	auto const word = token.lexeme;
 	if (word == "-") { return true; }

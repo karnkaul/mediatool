@@ -3,13 +3,21 @@
 #include "log.hpp"
 #include "mediatool/manifest.hpp"
 #include <cstdlib>
+#include <filesystem>
 #include <print>
 
 namespace mediatool::cli {
 namespace {
+void print_subtitles(std::span<fs::path const> subtitles) {
+	for (auto const& subtitle : subtitles) { std::println("  {}", subtitle.filename().generic_string()); }
+}
+
 void print_episode_files(std::string_view const header, std::span<Episode const> episodes) {
 	std::println("{}", header);
-	for (auto const& episode : episodes) { std::println(" {} - {}", episode.id.as_string_view(), episode.path.filename().generic_string()); }
+	for (auto const& episode : episodes) {
+		std::println(" {} - {}", episode.id.as_string_view(), episode.path.filename().generic_string());
+		print_subtitles(episode.subtitles);
+	}
 }
 } // namespace
 
@@ -28,12 +36,14 @@ auto Identify::execute(Instance const& /*instance*/) -> int {
 
 	auto const visitor = klib::Visitor{
 		[](MovieManifest const& manifest) {
-			std::println(" media type: movie\n video: {}\n title: {}\n directory: {}", manifest.movie.path.generic_string(), manifest.title,
-						 manifest.directory.generic_string());
+			std::println(" media type: movie\n title: {}\n directory: {}\n video: {}", manifest.title, manifest.directory.generic_string(),
+						 manifest.movie.path.generic_string());
+			print_subtitles(manifest.movie.subtitles);
 		},
 		[](EpisodeManifest const& manifest) {
 			std::println(" media type: episode\n video: {}\n title: {} \n directory: {}", manifest.episode.path.generic_string(), manifest.title,
 						 manifest.directory.generic_string());
+			print_subtitles(manifest.episode.subtitles);
 		},
 		[](SeasonManifest const& manifest) {
 			std::println(" media type: season\n id: {}\n directory: {}\n title: {}", manifest.season.id.as_string_view(), manifest.season.path.generic_string(),

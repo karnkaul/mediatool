@@ -1,6 +1,7 @@
 #include "mediatool/util.hpp"
 #include "detail/title_parser.hpp"
 #include "mediatool/types.hpp"
+#include <filesystem>
 #include <optional>
 #include <regex>
 #include <string_view>
@@ -23,8 +24,7 @@ auto util::to_int(std::string_view const text, int const fallback) -> int {
 }
 
 auto util::identify_title(fs::path const& path) -> std::string {
-	auto stem = path.stem();
-	if (stem.empty()) { stem = path.parent_path().stem(); }
+	auto const stem = fs::canonical(path).stem();
 	return detail::TitleParser{}.parse(stem.string());
 }
 

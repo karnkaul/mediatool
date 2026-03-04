@@ -17,8 +17,12 @@ namespace fs = std::filesystem;
 constexpr auto video_extensions_v = std::array{
 	".mp4", ".mkv", ".avi", ".m4v", ".webm",
 };
-
 constexpr auto is_video_file(std::string_view const extension) { return std::ranges::find(video_extensions_v, extension) != video_extensions_v.end(); }
+
+constexpr auto subtitle_extensions_v = std::array{
+	".srt",
+};
+constexpr auto is_subtitle_file(std::string_view const extension) { return std::ranges::find(subtitle_extensions_v, extension) != subtitle_extensions_v.end(); }
 
 [[nodiscard]] auto is_season_directory(fs::path const& path) -> bool;
 [[nodiscard]] auto is_episode(fs::path const& path) -> bool;

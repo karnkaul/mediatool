@@ -2,6 +2,7 @@
 #include "klib/visitor.hpp"
 #include "log.hpp"
 #include "mediatool/manifest.hpp"
+#include "mediatool/media_file.hpp"
 #include <cstdlib>
 #include <print>
 
@@ -20,6 +21,17 @@ Lab::Lab() {
 }
 
 auto Lab::execute(Instance const& /*instance*/) -> int {
+	auto const media_files = collect_media_files(m_path);
+	if (media_files.empty()) {
+		std::println("no media files found at: '{}'", m_path);
+		return EXIT_FAILURE;
+	}
+
+	for (auto const& file : media_files) {
+		std::println(" [{}] {} ({}B)", MediaFile::type_name_map.to_name(file.type), file.path.filename().string(), file.size);
+	}
+	return EXIT_SUCCESS;
+
 	auto const manifest = build_manifest(m_path);
 	if (!manifest) {
 		log.error("failed to build manifest for: '{}'", m_path);
