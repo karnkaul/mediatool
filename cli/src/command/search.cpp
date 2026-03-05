@@ -8,8 +8,8 @@
 #include <string_view>
 
 namespace mediatool::cli {
-auto Search::get_args() -> std::vector<klib::args::Arg> {
-	return {
+void Search::populate_args() {
+	m_args = {
 		klib::args::named_option(m_type, "t,type"),
 		klib::args::named_option(m_query.season, "s,season"),
 		klib::args::named_option(m_query.episode, "e,episode"),
@@ -26,7 +26,7 @@ auto Search::execute() -> ExitCode {
 		type = omdb::Type::Series;
 	}
 
-	auto const result = get_omdb_service()->search(m_query, type);
+	auto const result = m_omdb->search(m_query, type);
 	if (!result) {
 		log.error("{}", result.error().text);
 		return ExitCode::OmdbServiceFailure;

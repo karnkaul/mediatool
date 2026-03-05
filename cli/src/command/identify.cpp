@@ -21,8 +21,8 @@ void print_episode_files(std::string_view const header, std::span<Episode const>
 }
 } // namespace
 
-auto Identify::get_args() -> std::vector<klib::args::Arg> {
-	return {
+void Identify::populate_args() {
+	m_args = {
 		klib::args::positional_required(m_path, "path"),
 	};
 }

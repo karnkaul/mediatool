@@ -2,7 +2,7 @@
 #include "log.hpp"
 
 namespace mediatool::cli {
-auto Lab::get_args() -> std::vector<klib::args::Arg> { return {}; }
+void Lab::populate_args() {}
 
 auto Lab::execute() -> ExitCode {
 	log.debug("nothing to do");

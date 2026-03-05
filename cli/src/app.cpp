@@ -22,7 +22,15 @@ constexpr auto env_omdb_token_key_v = klib::CString{"MEDIATOOL_OMDB_TOKEN"};
 } // namespace
 
 auto App::run(int argc, char const* const* argv) -> int {
-	add_commands<Search, Identify, Lab>();
+	auto const get_api_token = [this] -> std::string_view {
+		set_omdb_token();
+		return m_omdb_token;
+	};
+
+	auto const omdb_service = omdb::IService::create(get_api_token, omdb::Curl::Internal);
+
+	add_command<Search>(*omdb_service);
+	add_commands<Identify, Lab>();
 
 	auto const parse_result = parse_args(argc, argv);
 	if (parse_result.early_return()) { return parse_result.get_return_code(); }
@@ -35,22 +43,9 @@ auto App::run(int argc, char const* const* argv) -> int {
 		return EXIT_FAILURE;
 	}
 
-	auto const get_api_token = [this] -> std::string_view {
-		set_omdb_token();
-		return m_omdb_token;
-	};
-
-	auto const omdb_service = omdb::IService::create(get_api_token, omdb::Curl::Internal);
-
 	auto& command = **it;
-	command.m_omdb = omdb_service.get();
 
 	return int(command.execute());
-}
-
-template <std::derived_from<Command>... Ts>
-void App::add_commands() {
-	(m_commands.push_back(std::make_unique<Ts>()), ...);
 }
 
 auto App::parse_args(int argc, char const* const* argv) -> klib::args::ParseResult {
@@ -61,11 +56,7 @@ auto App::parse_args(int argc, char const* const* argv) -> klib::args::ParseResu
 	auto args = std::vector{
 		klib::args::named_option(m_omdb_token, "o,omdb-token", "omdb API token"),
 	};
-	m_command_args.reserve(m_commands.size());
-	for (auto const& command : m_commands) {
-		m_command_args.push_back(command->get_args());
-		args.push_back(klib::args::command(m_command_args.back(), command->get_name()));
-	}
+	for (auto const& command : m_commands) { args.push_back(klib::args::command(command->get_args(), command->get_name())); }
 	return klib::args::parse_main(parse_info, args, argc, argv);
 }
 
