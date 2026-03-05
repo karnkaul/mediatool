@@ -3,14 +3,11 @@
 
 namespace mediatool::cli {
 class Lab : public Command {
-  public:
 	static constexpr auto name_v = std::string_view{"lab"};
 
-	explicit Lab();
-
-  private:
 	[[nodiscard]] auto get_name() const -> std::string_view final { return name_v; }
-	[[nodiscard]] auto execute(Instance const& instance) -> int final;
+	[[nodiscard]] auto get_args() -> std::vector<klib::args::Arg> final;
+	[[nodiscard]] auto execute() -> int final;
 
 	std::string_view m_path{};
 };

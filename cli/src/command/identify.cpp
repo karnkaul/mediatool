@@ -1,4 +1,5 @@
 #include "command/identify.hpp"
+#include "klib/args/arg.hpp"
 #include "klib/visitor.hpp"
 #include "log.hpp"
 #include "mediatool/manifest.hpp"
@@ -21,13 +22,13 @@ void print_episode_files(std::string_view const header, std::span<Episode const>
 }
 } // namespace
 
-Identify::Identify() {
-	m_args = {
+auto Identify::get_args() -> std::vector<klib::args::Arg> {
+	return {
 		klib::args::positional_required(m_path, "path"),
 	};
 }
 
-auto Identify::execute(Instance const& /*instance*/) -> int {
+auto Identify::execute() -> int {
 	auto const path = fs::path{m_path};
 	if (!fs::exists(path)) {
 		log.error("nonexistent path: '{}'", m_path);

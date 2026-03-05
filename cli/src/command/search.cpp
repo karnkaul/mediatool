@@ -4,7 +4,6 @@
 #include "klib/args/arg.hpp"
 #include "klib/visitor.hpp"
 #include "log.hpp"
-#include "mediatool/instance.hpp"
 #include "mediatool/omdb.hpp"
 #include <cstdlib>
 #include <string_view>
@@ -20,8 +19,8 @@ auto handle_error(http::Error const& error) -> int {
 }
 } // namespace
 
-Search::Search() {
-	m_args = {
+auto Search::get_args() -> std::vector<klib::args::Arg> {
+	return {
 		klib::args::named_option(m_type, "t,type"),
 		klib::args::named_option(m_query.season, "s,season"),
 		klib::args::named_option(m_query.episode, "e,episode"),
@@ -29,7 +28,7 @@ Search::Search() {
 	};
 }
 
-auto Search::execute(Instance const& instance) -> int {
+auto Search::execute() -> int {
 	auto type = omdb::type_map.to_enum(m_type);
 
 	if (m_query.episode > 0) {
@@ -38,8 +37,7 @@ auto Search::execute(Instance const& instance) -> int {
 		type = omdb::Type::Series;
 	}
 
-	auto const& omdb = instance.get_omdb_service();
-	auto const result = omdb.search(m_query, type);
+	auto const result = get_omdb_service()->search(m_query, type);
 	if (!result) { return handle_error(result.error()); }
 
 	auto const visitor = klib::Visitor{

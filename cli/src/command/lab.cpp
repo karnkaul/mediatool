@@ -13,13 +13,13 @@ void print_episode_files(std::string_view const header, std::span<Episode const>
 }
 } // namespace
 
-Lab::Lab() {
-	m_args = {
+auto Lab::get_args() -> std::vector<klib::args::Arg> {
+	return {
 		klib::args::positional_required(m_path, "path"),
 	};
 }
 
-auto Lab::execute(Instance const& /*instance*/) -> int {
+auto Lab::execute() -> int {
 	auto const manifest = build_manifest(m_path);
 	if (!manifest) {
 		log.error("failed to build manifest for: '{}'", m_path);
