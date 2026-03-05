@@ -3,7 +3,6 @@
 #include "klib/visitor.hpp"
 #include "log.hpp"
 #include "mediatool/manifest.hpp"
-#include <cstdlib>
 #include <filesystem>
 #include <print>
 
@@ -28,17 +27,17 @@ auto Identify::get_args() -> std::vector<klib::args::Arg> {
 	};
 }
 
-auto Identify::execute() -> int {
+auto Identify::execute() -> ExitCode {
 	auto const path = fs::path{m_path};
 	if (!fs::exists(path)) {
 		log.error("nonexistent path: '{}'", m_path);
-		return EXIT_FAILURE;
+		return ExitCode::InvalidPath;
 	}
 
 	auto const manifest = build_manifest(path);
 	if (!manifest) {
 		log.error("failed to build manifest for: '{}'", m_path);
-		return EXIT_FAILURE;
+		return ExitCode::ManifestFailure;
 	}
 
 	auto const visitor = klib::Visitor{
@@ -65,6 +64,6 @@ auto Identify::execute() -> int {
 	};
 	std::visit(visitor, *manifest);
 
-	return EXIT_SUCCESS;
+	return ExitCode::Success;
 }
 } // namespace mediatool::cli

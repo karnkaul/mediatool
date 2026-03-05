@@ -1,4 +1,5 @@
 #pragma once
+#include "exit_code.hpp"
 #include "klib/args/arg.hpp"
 #include "klib/base_types.hpp"
 #include "klib/ptr.hpp"
@@ -7,12 +8,13 @@
 #include <vector>
 
 namespace mediatool::cli {
+
 class Command : public klib::Polymorphic, public klib::Pinned {
   public:
 	[[nodiscard]] virtual auto get_name() const -> std::string_view = 0;
 	[[nodiscard]] virtual auto get_args() -> std::vector<klib::args::Arg> { return {}; }
 
-	[[nodiscard]] virtual auto execute() -> int = 0;
+	[[nodiscard]] virtual auto execute() -> ExitCode = 0;
 
   protected:
 	/// \brief Is non-null inside execute().

@@ -5,20 +5,9 @@
 #include "klib/visitor.hpp"
 #include "log.hpp"
 #include "mediatool/omdb.hpp"
-#include <cstdlib>
 #include <string_view>
 
 namespace mediatool::cli {
-namespace http = kcurl::http;
-
-namespace {
-
-auto handle_error(http::Error const& error) -> int {
-	log.error("{}", error.text);
-	return EXIT_FAILURE;
-}
-} // namespace
-
 auto Search::get_args() -> std::vector<klib::args::Arg> {
 	return {
 		klib::args::named_option(m_type, "t,type"),
@@ -28,7 +17,7 @@ auto Search::get_args() -> std::vector<klib::args::Arg> {
 	};
 }
 
-auto Search::execute() -> int {
+auto Search::execute() -> ExitCode {
 	auto type = omdb::type_map.to_enum(m_type);
 
 	if (m_query.episode > 0) {
@@ -38,7 +27,10 @@ auto Search::execute() -> int {
 	}
 
 	auto const result = get_omdb_service()->search(m_query, type);
-	if (!result) { return handle_error(result.error()); }
+	if (!result) {
+		log.error("{}", result.error().text);
+		return ExitCode::OmdbServiceFailure;
+	}
 
 	auto const visitor = klib::Visitor{
 		[&](omdb::Movie const& movie) {
@@ -63,6 +55,6 @@ auto Search::execute() -> int {
 	};
 	std::visit(visitor, result->payload);
 
-	return EXIT_SUCCESS;
+	return ExitCode::Success;
 }
 } // namespace mediatool::cli

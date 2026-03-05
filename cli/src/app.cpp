@@ -45,7 +45,7 @@ auto App::run(int argc, char const* const* argv) -> int {
 	auto& command = **it;
 	command.m_omdb = omdb_service.get();
 
-	return command.execute();
+	return int(command.execute());
 }
 
 template <std::derived_from<Command>... Ts>
