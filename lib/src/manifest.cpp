@@ -171,4 +171,7 @@ class Builder {
 } // namespace
 } // namespace mediatool::detail
 
-auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> { return detail::Builder{}.build(fs::canonical(path)); }
+auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> {
+	if (!fs::exists(path)) { return {}; }
+	return detail::Builder{}.build(fs::canonical(path));
+}

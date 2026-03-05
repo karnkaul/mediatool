@@ -28,7 +28,13 @@ Identify::Identify() {
 }
 
 auto Identify::execute(Instance const& /*instance*/) -> int {
-	auto const manifest = build_manifest(m_path);
+	auto const path = fs::path{m_path};
+	if (!fs::exists(path)) {
+		log.error("nonexistent path: '{}'", m_path);
+		return EXIT_FAILURE;
+	}
+
+	auto const manifest = build_manifest(path);
 	if (!manifest) {
 		log.error("failed to build manifest for: '{}'", m_path);
 		return EXIT_FAILURE;
