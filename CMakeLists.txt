@@ -9,6 +9,10 @@ include(version.cmake)
 
 project(${package_name} VERSION ${build_version})
 
+option(MEDIATOOL_BUILD_CLI "Build mediatool CLI" ${PROJECT_IS_TOP_LEVEL})
+
 add_subdirectory(ext)
 add_subdirectory(lib)
-add_subdirectory(cli)
+if (MEDIATOOL_BUILD_CLI)
+  add_subdirectory(cli)
+endif()

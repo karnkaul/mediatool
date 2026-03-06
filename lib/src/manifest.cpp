@@ -5,10 +5,13 @@
 #include "mediatool/util.hpp"
 #include <cstdint>
 #include <filesystem>
+#include <iterator>
+#include <span>
 #include <string_view>
 #include <utility>
 
-namespace mediatool::detail {
+namespace mediatool {
+namespace detail {
 namespace {
 class Builder {
   public:
@@ -168,7 +171,46 @@ class Builder {
 
 	Directory m_current_dir{};
 };
-} // namespace
-} // namespace mediatool::detail
 
-auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> { return detail::Builder{}.build(fs::canonical(path)); }
+void serialize_subtitles(std::string& out, std::span<fs::path const> subtitles) {
+	for (auto const& subtitle : subtitles) { std::format_to(std::back_inserter(out), "  {}\n", subtitle.filename().generic_string()); }
+}
+
+void serialize_episodes(std::string& out, std::span<Episode const> episodes) {
+	for (auto const& episode : episodes) {
+		std::format_to(std::back_inserter(out), " {} - {}\n", episode.id.as_string_view(), episode.path.filename().generic_string());
+		detail::serialize_subtitles(out, episode.subtitles);
+	}
+}
+} // namespace
+} // namespace detail
+
+void MovieManifest::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " media type: movie\n title: {}\n directory: {}\n video: {}\n subtitles:\n", title, directory.generic_string(),
+				   movie.path.generic_string());
+	detail::serialize_subtitles(out, movie.subtitles);
+}
+
+void EpisodeManifest::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " media type: episode\n video: {}\n title: {} \n directory: {}", episode.path.generic_string(), title,
+				   directory.generic_string());
+	detail::serialize_subtitles(out, episode.subtitles);
+}
+void SeasonManifest::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " media type: season\n id: {}\n directory: {}\n title: {}\n", season.id.as_string_view(),
+				   season.path.generic_string(), title);
+	detail::serialize_episodes(out, season.episodes);
+}
+void SeriesManifest::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " media type: series\n directory: {}\n title: {}\n", series.path.generic_string(), title);
+	for (auto const& season : series.seasons) {
+		std::format_to(std::back_inserter(out), "{}\n", season.id.as_string_view());
+		detail::serialize_episodes(out, season.episodes);
+	}
+}
+} // namespace mediatool
+
+auto mediatool::build_manifest(fs::path const& path) -> std::optional<Manifest> {
+	if (!fs::exists(path)) { return {}; }
+	return detail::Builder{}.build(fs::canonical(path));
+}
