@@ -116,6 +116,23 @@ class Service : public IService {
 };
 } // namespace
 
+void Movie::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), "movie:\n title: {}\n year: {}\n imdb_id: {}\n plot: {}", title, year, imdb_id, plot);
+}
+
+void Episode::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), "episode:\n title: {}\n number: {}\n imdb_id: {}\n plot: {}", title, number, imdb_id, plot);
+}
+
+void Season::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " title: {}\n number: {}\n episodes:\n", title, number);
+	for (auto const& episode : episodes) { std::format_to(std::back_inserter(out), "  S{:02}E{:02} - {}\n", number, episode.number, episode.title); }
+}
+
+void Series::serialize_to(std::string& out) const {
+	std::format_to(std::back_inserter(out), " title: {}\n year: {}\n imdb_id: {}\n total seasons: {}\n plot: {}\n", title, year, imdb_id, total_seasons, plot);
+}
+
 auto IService::create(GetApiToken get_api_token, Curl const curl) -> std::unique_ptr<IService> {
 	return std::make_unique<Service>(std::move(get_api_token), curl);
 }

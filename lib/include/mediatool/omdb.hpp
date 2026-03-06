@@ -20,6 +20,8 @@ auto const type_map = klib::EnumNameMap<Type>{
 };
 
 struct Movie {
+	void serialize_to(std::string& out) const;
+
 	std::string title{};
 	int year{};
 	std::string imdb_id{};
@@ -27,6 +29,8 @@ struct Movie {
 };
 
 struct Episode {
+	void serialize_to(std::string& out) const;
+
 	int number{};
 	std::string title{};
 	std::string imdb_id{};
@@ -34,12 +38,16 @@ struct Episode {
 };
 
 struct Season {
+	void serialize_to(std::string& out) const;
+
 	int number{};
 	std::string title{};
 	std::vector<Episode> episodes{};
 };
 
 struct Series {
+	void serialize_to(std::string& out) const;
+
 	std::string title{};
 	int year{};
 	std::string imdb_id{};

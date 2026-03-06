@@ -1,10 +1,10 @@
 #include "command/search.hpp"
-#include "djson/json.hpp"
 #include "kcurl/http.hpp"
 #include "klib/args/arg.hpp"
-#include "klib/visitor.hpp"
 #include "log.hpp"
 #include "mediatool/omdb.hpp"
+#include "serialize.hpp"
+#include <print>
 #include <string_view>
 
 namespace mediatool::cli {
@@ -32,28 +32,7 @@ auto Search::execute() -> ExitCode {
 		return ExitCode::OmdbServiceFailure;
 	}
 
-	auto const visitor = klib::Visitor{
-		[&](omdb::Movie const& movie) {
-			log.info("movie:\n title: {}\n year: {}\n imdb_id: {}\n plot: {}\n", movie.title, movie.year, movie.imdb_id, movie.plot);
-		},
-		[&](omdb::Episode const& episode) {
-			log.info("episode:\n title: {}\n number: {}\n imdb_id: {}\n plot: {}\n", episode.title, episode.number, episode.imdb_id, episode.plot);
-		},
-		[&](omdb::Season const& season) {
-			auto text = std::string{"season:\n"};
-			std::format_to(std::back_inserter(text), " title: {}\n number: {}\n episodes:\n", season.title, season.number);
-			for (auto const& episode : season.episodes) {
-				std::format_to(std::back_inserter(text), "  S{:02}E{:02} - {}\n", m_query.season, episode.number, episode.title);
-			}
-			log.info("{}", text);
-		},
-		[&](omdb::Series const& series) {
-			log.info("response:\n title: {}\n year: {}\n imdb_id: {}\n total seasons: {}\n plot: {}\n", series.title, series.year, series.imdb_id,
-					 series.total_seasons, series.plot);
-		},
-		[&](dj::Json const& json) { log.info("response:\n{}", json.serialize()); },
-	};
-	std::visit(visitor, result->payload);
+	std::visit([&](auto const& t) { std::println("{}", serialize(t)); }, result->payload);
 
 	return ExitCode::Success;
 }
